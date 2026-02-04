@@ -1,0 +1,309 @@
+{
+  "format": 1,
+  "restore": {
+    "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.API\\UnitOfWork.Orders.API.csproj": {}
+  },
+  "projects": {
+    "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.API\\UnitOfWork.Orders.API.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.API\\UnitOfWork.Orders.API.csproj",
+        "projectName": "UnitOfWork.Orders.API",
+        "projectPath": "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.API\\UnitOfWork.Orders.API.csproj",
+        "packagesPath": "C:\\Users\\vasan\\.nuget\\packages\\",
+        "outputPath": "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.API\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
+          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\vasan\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Application\\UnitOfWork.Orders.Application.csproj": {
+                "projectPath": "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Application\\UnitOfWork.Orders.Application.csproj"
+              },
+              "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Infrastructure\\UnitOfWork.Orders.Infrastructure.csproj": {
+                "projectPath": "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Infrastructure\\UnitOfWork.Orders.Infrastructure.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.AspNetCore.OpenApi": {
+              "target": "Package",
+              "version": "[8.0.23, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[6.6.2, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.417/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Application\\UnitOfWork.Orders.Application.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Application\\UnitOfWork.Orders.Application.csproj",
+        "projectName": "UnitOfWork.Orders.Application",
+        "projectPath": "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Application\\UnitOfWork.Orders.Application.csproj",
+        "packagesPath": "C:\\Users\\vasan\\.nuget\\packages\\",
+        "outputPath": "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Application\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
+          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\vasan\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Domain\\UnitOfWork.Orders.Domain.csproj": {
+                "projectPath": "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Domain\\UnitOfWork.Orders.Domain.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.417/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Domain\\UnitOfWork.Orders.Domain.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Domain\\UnitOfWork.Orders.Domain.csproj",
+        "projectName": "UnitOfWork.Orders.Domain",
+        "projectPath": "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Domain\\UnitOfWork.Orders.Domain.csproj",
+        "packagesPath": "C:\\Users\\vasan\\.nuget\\packages\\",
+        "outputPath": "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Domain\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
+          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\vasan\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.417/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Infrastructure\\UnitOfWork.Orders.Infrastructure.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Infrastructure\\UnitOfWork.Orders.Infrastructure.csproj",
+        "projectName": "UnitOfWork.Orders.Infrastructure",
+        "projectPath": "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Infrastructure\\UnitOfWork.Orders.Infrastructure.csproj",
+        "packagesPath": "C:\\Users\\vasan\\.nuget\\packages\\",
+        "outputPath": "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Infrastructure\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
+          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\vasan\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Application\\UnitOfWork.Orders.Application.csproj": {
+                "projectPath": "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Application\\UnitOfWork.Orders.Application.csproj"
+              },
+              "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Domain\\UnitOfWork.Orders.Domain.csproj": {
+                "projectPath": "D:\\PracticeProjects\\Scenario-poc\\Unit of Work\\UnitOfWork.Orders.Domain\\UnitOfWork.Orders.Domain.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.EntityFrameworkCore.InMemory": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.417/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

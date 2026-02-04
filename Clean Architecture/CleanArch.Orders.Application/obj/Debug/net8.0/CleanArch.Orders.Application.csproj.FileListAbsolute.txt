@@ -1,0 +1,15 @@
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Application\bin\Debug\net8.0\CleanArch.Orders.Application.deps.json
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Application\bin\Debug\net8.0\CleanArch.Orders.Application.dll
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Application\bin\Debug\net8.0\CleanArch.Orders.Application.pdb
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Application\bin\Debug\net8.0\CleanArch.Orders.Domain.dll
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Application\bin\Debug\net8.0\CleanArch.Orders.Domain.pdb
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Application\obj\Debug\net8.0\CleanArch.Orders.Application.csproj.AssemblyReference.cache
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Application\obj\Debug\net8.0\CleanArch.Orders.Application.GeneratedMSBuildEditorConfig.editorconfig
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Application\obj\Debug\net8.0\CleanArch.Orders.Application.AssemblyInfoInputs.cache
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Application\obj\Debug\net8.0\CleanArch.Orders.Application.AssemblyInfo.cs
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Application\obj\Debug\net8.0\CleanArch.Orders.Application.csproj.CoreCompileInputs.cache
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Application\obj\Debug\net8.0\CleanArc.C0DA184F.Up2Date
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Application\obj\Debug\net8.0\CleanArch.Orders.Application.dll
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Application\obj\Debug\net8.0\refint\CleanArch.Orders.Application.dll
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Application\obj\Debug\net8.0\CleanArch.Orders.Application.pdb
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Application\obj\Debug\net8.0\ref\CleanArch.Orders.Application.dll

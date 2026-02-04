@@ -1,0 +1,11 @@
+D:\PracticeProjects\Scenario-poc\Repository Pattern\RepoPattern.Orders.Domain\bin\Debug\net8.0\RepoPattern.Orders.Domain.deps.json
+D:\PracticeProjects\Scenario-poc\Repository Pattern\RepoPattern.Orders.Domain\bin\Debug\net8.0\RepoPattern.Orders.Domain.dll
+D:\PracticeProjects\Scenario-poc\Repository Pattern\RepoPattern.Orders.Domain\bin\Debug\net8.0\RepoPattern.Orders.Domain.pdb
+D:\PracticeProjects\Scenario-poc\Repository Pattern\RepoPattern.Orders.Domain\obj\Debug\net8.0\RepoPattern.Orders.Domain.GeneratedMSBuildEditorConfig.editorconfig
+D:\PracticeProjects\Scenario-poc\Repository Pattern\RepoPattern.Orders.Domain\obj\Debug\net8.0\RepoPattern.Orders.Domain.AssemblyInfoInputs.cache
+D:\PracticeProjects\Scenario-poc\Repository Pattern\RepoPattern.Orders.Domain\obj\Debug\net8.0\RepoPattern.Orders.Domain.AssemblyInfo.cs
+D:\PracticeProjects\Scenario-poc\Repository Pattern\RepoPattern.Orders.Domain\obj\Debug\net8.0\RepoPattern.Orders.Domain.csproj.CoreCompileInputs.cache
+D:\PracticeProjects\Scenario-poc\Repository Pattern\RepoPattern.Orders.Domain\obj\Debug\net8.0\RepoPattern.Orders.Domain.dll
+D:\PracticeProjects\Scenario-poc\Repository Pattern\RepoPattern.Orders.Domain\obj\Debug\net8.0\refint\RepoPattern.Orders.Domain.dll
+D:\PracticeProjects\Scenario-poc\Repository Pattern\RepoPattern.Orders.Domain\obj\Debug\net8.0\RepoPattern.Orders.Domain.pdb
+D:\PracticeProjects\Scenario-poc\Repository Pattern\RepoPattern.Orders.Domain\obj\Debug\net8.0\ref\RepoPattern.Orders.Domain.dll

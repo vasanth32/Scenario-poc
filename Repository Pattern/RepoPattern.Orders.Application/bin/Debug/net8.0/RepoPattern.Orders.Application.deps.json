@@ -1,0 +1,39 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "RepoPattern.Orders.Application/1.0.0": {
+        "dependencies": {
+          "RepoPattern.Orders.Domain": "1.0.0"
+        },
+        "runtime": {
+          "RepoPattern.Orders.Application.dll": {}
+        }
+      },
+      "RepoPattern.Orders.Domain/1.0.0": {
+        "runtime": {
+          "RepoPattern.Orders.Domain.dll": {
+            "assemblyVersion": "1.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "RepoPattern.Orders.Application/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "RepoPattern.Orders.Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

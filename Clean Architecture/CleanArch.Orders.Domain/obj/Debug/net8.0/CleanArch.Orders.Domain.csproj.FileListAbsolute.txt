@@ -1,0 +1,11 @@
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Domain\bin\Debug\net8.0\CleanArch.Orders.Domain.deps.json
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Domain\bin\Debug\net8.0\CleanArch.Orders.Domain.dll
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Domain\bin\Debug\net8.0\CleanArch.Orders.Domain.pdb
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Domain\obj\Debug\net8.0\CleanArch.Orders.Domain.GeneratedMSBuildEditorConfig.editorconfig
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Domain\obj\Debug\net8.0\CleanArch.Orders.Domain.AssemblyInfoInputs.cache
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Domain\obj\Debug\net8.0\CleanArch.Orders.Domain.AssemblyInfo.cs
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Domain\obj\Debug\net8.0\CleanArch.Orders.Domain.csproj.CoreCompileInputs.cache
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Domain\obj\Debug\net8.0\CleanArch.Orders.Domain.dll
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Domain\obj\Debug\net8.0\refint\CleanArch.Orders.Domain.dll
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Domain\obj\Debug\net8.0\CleanArch.Orders.Domain.pdb
+D:\PracticeProjects\Scenario-poc\Clean Architecture\CleanArch.Orders.Domain\obj\Debug\net8.0\ref\CleanArch.Orders.Domain.dll

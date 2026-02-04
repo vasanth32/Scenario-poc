@@ -1,0 +1,15 @@
+D:\PracticeProjects\Scenario-poc\Dependency Injection\DI.Orders.Application\bin\Debug\net8.0\DI.Orders.Application.deps.json
+D:\PracticeProjects\Scenario-poc\Dependency Injection\DI.Orders.Application\bin\Debug\net8.0\DI.Orders.Application.dll
+D:\PracticeProjects\Scenario-poc\Dependency Injection\DI.Orders.Application\bin\Debug\net8.0\DI.Orders.Application.pdb
+D:\PracticeProjects\Scenario-poc\Dependency Injection\DI.Orders.Application\bin\Debug\net8.0\DI.Orders.Domain.dll
+D:\PracticeProjects\Scenario-poc\Dependency Injection\DI.Orders.Application\bin\Debug\net8.0\DI.Orders.Domain.pdb
+D:\PracticeProjects\Scenario-poc\Dependency Injection\DI.Orders.Application\obj\Debug\net8.0\DI.Orders.Application.csproj.AssemblyReference.cache
+D:\PracticeProjects\Scenario-poc\Dependency Injection\DI.Orders.Application\obj\Debug\net8.0\DI.Orders.Application.GeneratedMSBuildEditorConfig.editorconfig
+D:\PracticeProjects\Scenario-poc\Dependency Injection\DI.Orders.Application\obj\Debug\net8.0\DI.Orders.Application.AssemblyInfoInputs.cache
+D:\PracticeProjects\Scenario-poc\Dependency Injection\DI.Orders.Application\obj\Debug\net8.0\DI.Orders.Application.AssemblyInfo.cs
+D:\PracticeProjects\Scenario-poc\Dependency Injection\DI.Orders.Application\obj\Debug\net8.0\DI.Orders.Application.csproj.CoreCompileInputs.cache
+D:\PracticeProjects\Scenario-poc\Dependency Injection\DI.Orders.Application\obj\Debug\net8.0\DI.Order.A7503F19.Up2Date
+D:\PracticeProjects\Scenario-poc\Dependency Injection\DI.Orders.Application\obj\Debug\net8.0\DI.Orders.Application.dll
+D:\PracticeProjects\Scenario-poc\Dependency Injection\DI.Orders.Application\obj\Debug\net8.0\refint\DI.Orders.Application.dll
+D:\PracticeProjects\Scenario-poc\Dependency Injection\DI.Orders.Application\obj\Debug\net8.0\DI.Orders.Application.pdb
+D:\PracticeProjects\Scenario-poc\Dependency Injection\DI.Orders.Application\obj\Debug\net8.0\ref\DI.Orders.Application.dll

@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\RepoPattern.Orders.API.props" />
+</Project>

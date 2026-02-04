@@ -1,0 +1,39 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "CleanArch.Orders.Application/1.0.0": {
+        "dependencies": {
+          "CleanArch.Orders.Domain": "1.0.0"
+        },
+        "runtime": {
+          "CleanArch.Orders.Application.dll": {}
+        }
+      },
+      "CleanArch.Orders.Domain/1.0.0": {
+        "runtime": {
+          "CleanArch.Orders.Domain.dll": {
+            "assemblyVersion": "1.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "CleanArch.Orders.Application/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "CleanArch.Orders.Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
