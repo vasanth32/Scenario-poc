@@ -1,0 +1,12 @@
+D:\PracticeProjects\Scenario-poc\SOLID\SOLID.Orders.Domain\bin\Debug\net8.0\SOLID.Orders.Domain.deps.json
+D:\PracticeProjects\Scenario-poc\SOLID\SOLID.Orders.Domain\bin\Debug\net8.0\SOLID.Orders.Domain.dll
+D:\PracticeProjects\Scenario-poc\SOLID\SOLID.Orders.Domain\bin\Debug\net8.0\SOLID.Orders.Domain.pdb
+D:\PracticeProjects\Scenario-poc\SOLID\SOLID.Orders.Domain\obj\Debug\net8.0\SOLID.Orders.Domain.GeneratedMSBuildEditorConfig.editorconfig
+D:\PracticeProjects\Scenario-poc\SOLID\SOLID.Orders.Domain\obj\Debug\net8.0\SOLID.Orders.Domain.AssemblyInfoInputs.cache
+D:\PracticeProjects\Scenario-poc\SOLID\SOLID.Orders.Domain\obj\Debug\net8.0\SOLID.Orders.Domain.AssemblyInfo.cs
+D:\PracticeProjects\Scenario-poc\SOLID\SOLID.Orders.Domain\obj\Debug\net8.0\SOLID.Orders.Domain.csproj.CoreCompileInputs.cache
+D:\PracticeProjects\Scenario-poc\SOLID\SOLID.Orders.Domain\obj\Debug\net8.0\SOLID.Orders.Domain.sourcelink.json
+D:\PracticeProjects\Scenario-poc\SOLID\SOLID.Orders.Domain\obj\Debug\net8.0\SOLID.Orders.Domain.dll
+D:\PracticeProjects\Scenario-poc\SOLID\SOLID.Orders.Domain\obj\Debug\net8.0\refint\SOLID.Orders.Domain.dll
+D:\PracticeProjects\Scenario-poc\SOLID\SOLID.Orders.Domain\obj\Debug\net8.0\SOLID.Orders.Domain.pdb
+D:\PracticeProjects\Scenario-poc\SOLID\SOLID.Orders.Domain\obj\Debug\net8.0\ref\SOLID.Orders.Domain.dll

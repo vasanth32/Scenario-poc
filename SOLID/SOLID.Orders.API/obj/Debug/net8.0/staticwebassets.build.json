@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "cG3wCoWKVIPfgkEayooUGZs4DnLdB6IRlTPLEBLG7ZQ=",
+  "Source": "SOLID.Orders.API",
+  "BasePath": "_content/SOLID.Orders.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

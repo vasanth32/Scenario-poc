@@ -1,0 +1,12 @@
+D:\PracticeProjects\Scenario-poc\CQRS\CQRS.Orders.Domain\bin\Debug\net8.0\CQRS.Orders.Domain.deps.json
+D:\PracticeProjects\Scenario-poc\CQRS\CQRS.Orders.Domain\bin\Debug\net8.0\CQRS.Orders.Domain.dll
+D:\PracticeProjects\Scenario-poc\CQRS\CQRS.Orders.Domain\bin\Debug\net8.0\CQRS.Orders.Domain.pdb
+D:\PracticeProjects\Scenario-poc\CQRS\CQRS.Orders.Domain\obj\Debug\net8.0\CQRS.Orders.Domain.GeneratedMSBuildEditorConfig.editorconfig
+D:\PracticeProjects\Scenario-poc\CQRS\CQRS.Orders.Domain\obj\Debug\net8.0\CQRS.Orders.Domain.AssemblyInfoInputs.cache
+D:\PracticeProjects\Scenario-poc\CQRS\CQRS.Orders.Domain\obj\Debug\net8.0\CQRS.Orders.Domain.AssemblyInfo.cs
+D:\PracticeProjects\Scenario-poc\CQRS\CQRS.Orders.Domain\obj\Debug\net8.0\CQRS.Orders.Domain.csproj.CoreCompileInputs.cache
+D:\PracticeProjects\Scenario-poc\CQRS\CQRS.Orders.Domain\obj\Debug\net8.0\CQRS.Orders.Domain.sourcelink.json
+D:\PracticeProjects\Scenario-poc\CQRS\CQRS.Orders.Domain\obj\Debug\net8.0\CQRS.Orders.Domain.dll
+D:\PracticeProjects\Scenario-poc\CQRS\CQRS.Orders.Domain\obj\Debug\net8.0\refint\CQRS.Orders.Domain.dll
+D:\PracticeProjects\Scenario-poc\CQRS\CQRS.Orders.Domain\obj\Debug\net8.0\CQRS.Orders.Domain.pdb
+D:\PracticeProjects\Scenario-poc\CQRS\CQRS.Orders.Domain\obj\Debug\net8.0\ref\CQRS.Orders.Domain.dll

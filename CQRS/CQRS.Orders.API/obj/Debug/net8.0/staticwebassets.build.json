@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "vV04dD+D1uN1ClFp9eIW6eSIxVYNFxtPLSIwHyhoeHM=",
+  "Source": "CQRS.Orders.API",
+  "BasePath": "_content/CQRS.Orders.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
