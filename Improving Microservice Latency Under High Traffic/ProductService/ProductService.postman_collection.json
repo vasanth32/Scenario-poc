@@ -1,0 +1,610 @@
+{
+	"info": {
+		"_postman_id": "product-service-collection",
+		"name": "ProductService - Caching Tests",
+		"description": "Collection to test ProductService endpoints with caching functionality",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Check if the service is healthy"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Products",
+			"item": [
+				{
+					"name": "Get All Products (Paginated)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/products?page=1&pageSize=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"products"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number"
+								},
+								{
+									"key": "pageSize",
+									"value": "10",
+									"description": "Items per page"
+								}
+							]
+						},
+						"description": "Get products with pagination. First call will be cache miss, second call will be cache hit."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Product by ID (Cache Test)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/products/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"1"
+							]
+						},
+						"description": "Get product by ID. Run this twice to see cache hit on second call."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Product by ID - Different ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/products/2",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"2"
+							]
+						},
+						"description": "Get a different product to test caching"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Product",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Laptop\",\n  \"description\": \"High-performance laptop with 16GB RAM\",\n  \"price\": 999.99,\n  \"stock\": 50,\n  \"category\": \"Electronics\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/products",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"products"
+							]
+						},
+						"description": "Create a new product. This will invalidate relevant caches."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Product - Phone",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Smartphone\",\n  \"description\": \"Latest smartphone with 128GB storage\",\n  \"price\": 699.99,\n  \"stock\": 100,\n  \"category\": \"Electronics\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/products",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"products"
+							]
+						},
+						"description": "Create another product for testing"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Product - Book",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Programming Book\",\n  \"description\": \"Learn C# programming\",\n  \"price\": 49.99,\n  \"stock\": 200,\n  \"category\": \"Books\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/products",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"products"
+							]
+						},
+						"description": "Create a product in a different category"
+					},
+					"response": []
+				},
+				{
+					"name": "Search Products - Laptop",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/products/search?query=laptop",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"search"
+							],
+							"query": [
+								{
+									"key": "query",
+									"value": "laptop",
+									"description": "Search term"
+								}
+							]
+						},
+						"description": "Search for products. First call = cache miss, second call = cache hit (distributed cache)"
+					},
+					"response": []
+				},
+				{
+					"name": "Search Products - Phone",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/products/search?query=phone",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"search"
+							],
+							"query": [
+								{
+									"key": "query",
+									"value": "phone",
+									"description": "Search term"
+								}
+							]
+						},
+						"description": "Search for phone products"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/products/categories",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"categories"
+							]
+						},
+						"description": "Get all product categories. Uses distributed cache (10 min TTL)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Cache Metrics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/products/cache/metrics",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"cache",
+								"metrics"
+							]
+						},
+						"description": "View cache performance metrics (hits, misses, hit rate)"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Cache Testing Scenarios",
+			"item": [
+				{
+					"name": "Scenario 1: Cache Hit Test",
+					"item": [
+						{
+							"name": "Step 1: First Request (Cache Miss)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// This is the first request - should be cache miss",
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response time should be higher (database query)\", function () {",
+											"    pm.expect(pm.response.responseTime).to.be.above(50);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/products/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"products",
+										"1"
+									]
+								},
+								"description": "First request - will query database (cache miss)"
+							},
+							"response": []
+						},
+						{
+							"name": "Step 2: Second Request (Cache Hit)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// This is the second request - should be cache hit",
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response time should be faster (from cache)\", function () {",
+											"    pm.expect(pm.response.responseTime).to.be.below(100);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/products/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"products",
+										"1"
+									]
+								},
+								"description": "Second request - should be served from cache (cache hit)"
+							},
+							"response": []
+						}
+					],
+					"description": "Test cache hit scenario: First request queries database, second request uses cache"
+				},
+				{
+					"name": "Scenario 2: Cache Invalidation Test",
+					"item": [
+						{
+							"name": "Step 1: Get Product (Cache It)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/products/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"products",
+										"1"
+									]
+								},
+								"description": "Get product to cache it"
+							},
+							"response": []
+						},
+						{
+							"name": "Step 2: Create New Product (Invalidates Cache)",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"New Product\",\n  \"description\": \"Test cache invalidation\",\n  \"price\": 29.99,\n  \"stock\": 10,\n  \"category\": \"Test\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/products",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"products"
+									]
+								},
+								"description": "Create product - this invalidates relevant caches"
+							},
+							"response": []
+						},
+						{
+							"name": "Step 3: Get Product Again (Fresh Data)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/products/1",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"products",
+										"1"
+									]
+								},
+								"description": "Get product again - cache was invalidated, so fresh data from database"
+							},
+							"response": []
+						}
+					],
+					"description": "Test cache invalidation: Create product should clear cache"
+				},
+				{
+					"name": "Scenario 3: Distributed Cache Test",
+					"item": [
+						{
+							"name": "Step 1: Search (Cache Miss)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/products/search?query=test",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"products",
+										"search"
+									],
+									"query": [
+										{
+											"key": "query",
+											"value": "test"
+										}
+									]
+								},
+								"description": "First search - distributed cache miss"
+							},
+							"response": []
+						},
+						{
+							"name": "Step 2: Same Search (Cache Hit)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/products/search?query=test",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"products",
+										"search"
+									],
+									"query": [
+										{
+											"key": "query",
+											"value": "test"
+										}
+									]
+								},
+								"description": "Same search - distributed cache hit (faster!)"
+							},
+							"response": []
+						}
+					],
+					"description": "Test distributed cache for search results"
+				}
+			]
+		},
+		{
+			"name": "Load Testing",
+			"item": [
+				{
+					"name": "Get Product - Multiple Times",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/products/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"1"
+							]
+						},
+						"description": "Run this multiple times in Postman Runner to test cache performance"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Products List - Multiple Times",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/products?page=1&pageSize=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"products"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Test list caching with multiple requests"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5191",
+			"type": "string",
+			"description": "Update this to match your service URL. Check terminal output for actual port."
+		}
+	]
+}
+
