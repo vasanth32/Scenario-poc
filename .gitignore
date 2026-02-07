@@ -123,3 +123,7 @@ Thumbs.db
 *.temp
 *~
 
+## Temporary folders
+tmp/
+**/tmp/
+

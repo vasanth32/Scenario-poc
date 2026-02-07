@@ -654,6 +654,620 @@ GET http://localhost:5001/api/products/cache/metrics
 
 ---
 
+## 🔧 Common Redis Issues in Production & Solutions
+
+Real-world problems teams face with Redis and how to solve them.
+
+---
+
+### Issue 1: Redis Connection Failures / Timeouts
+
+**The Problem:**
+- Services can't connect to Redis
+- Intermittent connection errors
+- "Connection refused" or "Timeout" errors in logs
+- Cache stops working, all requests go to database
+
+**Root Causes:**
+1. **Redis server is down** - Container crashed, service stopped
+2. **Network issues** - Firewall blocking, wrong port, network partition
+3. **Connection pool exhausted** - Too many connections, not releasing them
+4. **Redis memory full** - Redis can't accept new connections
+5. **Wrong connection string** - Typo in configuration
+
+**Diagnosis Flow:**
+
+```
+Step 1: Check if Redis is running
+  → docker ps (if using Docker)
+  → redis-cli ping (should return PONG)
+  → Check Redis service status
+
+Step 2: Check network connectivity
+  → Can you ping Redis host?
+  → Is port 6379 open?
+  → Check firewall rules
+  → Verify connection string in appsettings.json
+
+Step 3: Check Redis logs
+  → docker logs redis-cache
+  → Look for errors, warnings
+  → Check memory usage
+
+Step 4: Check application logs
+  → Look for Redis connection errors
+  → Check connection timeout messages
+  → Verify connection pool settings
+```
+
+**Solution Flow:**
+
+```
+1. Immediate Fix:
+   → Restart Redis: docker restart redis-cache
+   → Restart application services
+   → Verify connection works
+
+2. Check Configuration:
+   → Verify connection string: localhost:6379
+   → Check if using correct Redis instance
+   → Verify network settings
+
+3. Monitor Connection Pool:
+   → Check max connections in Redis: CONFIG GET maxclients
+   → Check application connection pool settings
+   → Ensure connections are properly disposed
+
+4. Long-term Prevention:
+   → Set up Redis health checks
+   → Implement connection retry logic
+   → Use connection pooling properly
+   → Monitor Redis metrics
+   → Set up alerts for connection failures
+```
+
+**Prevention:**
+- Use health checks to detect Redis issues early
+- Implement circuit breaker pattern for Redis calls
+- Set up monitoring and alerts
+- Use connection pooling with proper limits
+- Regular Redis maintenance and updates
+
+---
+
+### Issue 2: Cache Stampede / Thundering Herd
+
+**The Problem:**
+- Multiple requests hit the same cache miss simultaneously
+- All requests go to database at once
+- Database gets overwhelmed
+- High latency spikes
+- Service becomes slow or crashes
+
+**Root Causes:**
+1. **Popular item expires** - Many users request same data when cache expires
+2. **Cold start** - Service restarts, cache is empty, traffic hits immediately
+3. **No locking mechanism** - Multiple threads check cache, all miss, all query DB
+4. **High traffic on cache miss** - Viral content, flash sales, breaking news
+
+**Diagnosis Flow:**
+
+```
+Step 1: Identify the pattern
+  → Check logs for multiple "Cache MISS" for same key
+  → Look for database query spikes
+  → Monitor response times during incidents
+
+Step 2: Check timing
+  → Did cache expire recently?
+  → Is this happening at specific times?
+  → Correlate with traffic spikes
+
+Step 3: Analyze impact
+  → Database CPU usage spikes
+  → Response times increase
+  → Error rates go up
+```
+
+**Solution Flow:**
+
+```
+1. Implement Cache Locking:
+   → When cache miss occurs, lock the key
+   → Only one request queries database
+   → Other requests wait for the lock
+   → Once data is cached, release lock
+   → All waiting requests get cached data
+
+2. Use Background Refresh:
+   → Refresh cache before it expires
+   → Update cache in background
+   → Serve stale data while refreshing
+   → Prevents cache stampede
+
+3. Stagger Cache Expiration:
+   → Add random jitter to TTL
+   → Instead of all expiring at once
+   → Spread expiration over time window
+   → Reduces simultaneous misses
+
+4. Implement Request Deduplication:
+   → Queue duplicate requests
+   → Process first request
+   → Return same result to queued requests
+   → Prevents duplicate database queries
+```
+
+**Prevention:**
+- Use distributed locks (Redis SETNX) for cache misses
+- Implement cache warming strategies
+- Add jitter to cache expiration times
+- Use request deduplication
+- Monitor cache hit rates and adjust TTLs
+
+---
+
+### Issue 3: Memory Pressure / Redis Out of Memory
+
+**The Problem:**
+- Redis runs out of memory
+- New keys can't be stored
+- Redis starts evicting keys (data loss)
+- Performance degrades
+- Connection errors increase
+
+**Root Causes:**
+1. **Too much data cached** - Caching everything, no limits
+2. **Memory leaks** - Keys never expire, keep accumulating
+3. **Large objects** - Caching huge datasets
+4. **No eviction policy** - Redis can't free memory
+5. **Memory not monitored** - Issue discovered too late
+
+**Diagnosis Flow:**
+
+```
+Step 1: Check Redis memory usage
+  → redis-cli INFO memory
+  → Check used_memory vs maxmemory
+  → Look for memory warnings
+
+Step 2: Analyze cached data
+  → Count total keys: DBSIZE
+  → Check key sizes: MEMORY USAGE key
+  → Identify large keys
+  → Check TTL of keys: TTL key
+
+Step 3: Check eviction policy
+  → CONFIG GET maxmemory-policy
+  → See what happens when memory full
+  → Check if keys are being evicted
+```
+
+**Solution Flow:**
+
+```
+1. Immediate Relief:
+   → Increase Redis memory limit
+   → Clear unnecessary keys: FLUSHDB (careful!)
+   → Restart Redis (if safe to do so)
+   → Identify and remove large keys
+
+2. Implement Eviction Policy:
+   → Set maxmemory limit
+   → Choose eviction policy:
+     * allkeys-lru: Evict least recently used
+     * allkeys-lfu: Evict least frequently used
+     * volatile-lru: Evict expired keys first
+   → Redis automatically frees memory
+
+3. Optimize Caching Strategy:
+   → Don't cache everything
+   → Set appropriate TTLs
+   → Use smaller data structures
+   → Cache only frequently accessed data
+   → Implement cache size limits
+
+4. Monitor and Alert:
+   → Set up memory usage alerts
+   → Monitor key count
+   → Track memory growth trends
+   → Alert before hitting limits
+```
+
+**Prevention:**
+- Set maxmemory and eviction policy
+- Monitor memory usage continuously
+- Set TTLs on all cached data
+- Implement cache size limits per key type
+- Regular cleanup of unused keys
+- Use Redis memory analysis tools
+
+---
+
+### Issue 4: Stale Data / Cache Inconsistency
+
+**The Problem:**
+- Users see outdated information
+- Data in cache doesn't match database
+- Changes not reflected immediately
+- Different users see different data
+- Business logic fails due to stale data
+
+**Root Causes:**
+1. **Cache not invalidated** - Data updated in DB, cache not cleared
+2. **Race conditions** - Update happens between cache check and set
+3. **Multiple cache layers** - Invalidation doesn't reach all layers
+4. **TTL too long** - Data changes but cache hasn't expired
+5. **Distributed invalidation** - One instance invalidates, others don't know
+
+**Diagnosis Flow:**
+
+```
+Step 1: Identify stale data
+  → User reports seeing old data
+  → Compare cache value vs database
+  → Check when data was last updated
+  → Verify cache TTL
+
+Step 2: Check invalidation logic
+  → Are caches invalidated on updates?
+  → Is invalidation working correctly?
+  → Are all cache layers invalidated?
+  → Check invalidation logs
+
+Step 3: Analyze timing
+  → When was data updated?
+  → When was cache last refreshed?
+  → Is there a race condition?
+```
+
+**Solution Flow:**
+
+```
+1. Immediate Fix:
+   → Manually clear affected cache keys
+   → Force refresh by invalidating cache
+   → Update data again to trigger invalidation
+
+2. Fix Invalidation Logic:
+   → Ensure all write operations invalidate cache
+   → Invalidate related cache keys
+   → Use cache tags/patterns for bulk invalidation
+   → Implement version-based invalidation
+
+3. Implement Cache-Aside Pattern Correctly:
+   → Read: Check cache → If miss, read DB → Update cache
+   → Write: Update DB → Invalidate cache → Return
+   → Never write directly to cache without DB update
+
+4. Use Cache Versioning:
+   → Add version number to cache keys
+   → Increment version on data changes
+   → Old cache keys become invalid automatically
+   → New requests use new version
+
+5. Implement Write-Through for Critical Data:
+   → Update cache and database together
+   → Ensure consistency
+   → Use transactions where possible
+```
+
+**Prevention:**
+- Always invalidate cache on data updates
+- Use cache versioning for complex invalidation
+- Implement proper cache-aside pattern
+- Test invalidation logic thoroughly
+- Monitor cache hit rates (low rates might indicate stale data)
+- Use shorter TTLs for frequently changing data
+
+---
+
+### Issue 5: High Latency / Slow Cache Operations
+
+**The Problem:**
+- Cache operations are slow
+- Response times not improving with cache
+- Redis commands taking too long
+- Network latency to Redis is high
+- Cache not providing expected performance boost
+
+**Root Causes:**
+1. **Network latency** - Redis on different network/data center
+2. **Large values** - Serializing/deserializing huge objects
+3. **Too many operations** - Multiple round trips to Redis
+4. **Redis overloaded** - High CPU, memory pressure
+5. **Inefficient serialization** - Slow JSON parsing
+6. **Connection issues** - Connection pool exhausted
+
+**Diagnosis Flow:**
+
+```
+Step 1: Measure latency
+  → Time cache operations
+  → Compare cache hit vs miss times
+  → Check Redis command execution time
+  → Monitor network latency
+
+Step 2: Check Redis performance
+  → redis-cli --latency
+  → Check Redis CPU usage
+  → Monitor Redis slow log
+  → Check connection count
+
+Step 3: Analyze data size
+  → Check size of cached values
+  → Measure serialization time
+  → Check network bandwidth
+```
+
+**Solution Flow:**
+
+```
+1. Optimize Network:
+   → Move Redis closer to application
+   → Use same data center/region
+   → Reduce network hops
+   → Use connection pooling
+
+2. Optimize Data Size:
+   → Cache only necessary fields
+   → Use compression for large values
+   → Split large objects into smaller keys
+   → Use efficient serialization (MessagePack vs JSON)
+
+3. Reduce Round Trips:
+   → Use Redis pipelines for multiple operations
+   → Batch cache operations
+   → Use MGET for multiple keys
+   → Implement local cache layer (L1 cache)
+
+4. Optimize Redis Configuration:
+   → Tune Redis memory settings
+   → Optimize eviction policy
+   → Use Redis clustering for scale
+   → Monitor and optimize slow queries
+
+5. Implement Multi-Level Caching:
+   → L1: In-memory cache (fastest, local)
+   → L2: Redis cache (fast, shared)
+   → L3: Database (slowest, source of truth)
+   → Check L1 first, then L2, then L3
+```
+
+**Prevention:**
+- Monitor cache operation latencies
+- Set up alerts for slow operations
+- Regular performance testing
+- Optimize data structures
+- Use appropriate caching strategies
+- Keep Redis and application in same network
+
+---
+
+### Issue 6: Cache Key Collisions / Naming Conflicts
+
+**The Problem:**
+- Different services overwrite each other's cache
+- Wrong data returned for requests
+- Cache keys conflict between environments
+- Data from one service appears in another
+- Cache pollution
+
+**Root Causes:**
+1. **No key prefixing** - Services use same key names
+2. **Shared Redis instance** - Multiple services use same Redis
+3. **Environment mixing** - Dev/staging/prod using same Redis
+4. **Key naming conflicts** - Similar keys from different contexts
+5. **No namespace isolation** - All keys in same database
+
+**Diagnosis Flow:**
+
+```
+Step 1: Identify conflicts
+  → Check if wrong data is returned
+  → Compare cache keys across services
+  → Check Redis key patterns
+  → Verify service isolation
+
+Step 2: Check key naming
+  → Review cache key generation logic
+  → Check for key collisions
+  → Verify prefixes are unique
+  → Check environment separation
+```
+
+**Solution Flow:**
+
+```
+1. Implement Key Prefixing:
+   → Use service name: "ProductService:product:1"
+   → Use environment: "prod:ProductService:product:1"
+   → Use version: "v1:ProductService:product:1"
+   → Make prefixes unique per service
+
+2. Use Redis Databases:
+   → Separate services into different Redis databases
+   → Database 0: ProductService
+   → Database 1: OrderService
+   → Database 2: PaymentService
+   → Isolate by SELECT command
+
+3. Use Redis Instances:
+   → Separate Redis instances per service
+   → Complete isolation
+   → Better security
+   → Independent scaling
+
+4. Implement Namespace Pattern:
+   → {Environment}:{Service}:{Entity}:{Id}
+   → Example: "prod:ProductService:product:123"
+   → Clear hierarchy
+   → Easy to identify and manage
+```
+
+**Prevention:**
+- Always use service-specific prefixes
+- Separate environments (dev/staging/prod)
+- Document key naming conventions
+- Use Redis databases or instances for isolation
+- Regular audits of cache keys
+- Use key patterns that are self-documenting
+
+---
+
+### Issue 7: Redis Failover / High Availability Issues
+
+**The Problem:**
+- Redis goes down, all cache is lost
+- No failover mechanism
+- Service downtime during Redis maintenance
+- Data loss when Redis crashes
+- No backup or replication
+
+**Root Causes:**
+1. **Single Redis instance** - No redundancy
+2. **No replication** - No backup copy
+3. **No failover** - Manual intervention required
+4. **No persistence** - Data lost on restart
+5. **No monitoring** - Issues discovered too late
+
+**Diagnosis Flow:**
+
+```
+Step 1: Check Redis setup
+  → Is Redis running in single instance?
+  → Is replication configured?
+  → Is persistence enabled?
+  → Check high availability setup
+
+Step 2: Assess impact
+  → What happens if Redis goes down?
+  → How long to recover?
+  → Is data backed up?
+  → What's the RTO/RPO?
+```
+
+**Solution Flow:**
+
+```
+1. Implement Redis Replication:
+   → Set up Redis Master-Slave
+   → Master handles writes
+   → Slave replicates data
+   → Automatic failover to slave
+   → Data redundancy
+
+2. Use Redis Sentinel:
+   → Monitor Redis instances
+   → Automatic failover
+   → Service discovery
+   → High availability
+   → Multiple sentinels for quorum
+
+3. Use Redis Cluster:
+   → Distributed Redis
+   → Data sharding
+   → Automatic failover
+   → Horizontal scaling
+   → Built-in replication
+
+4. Enable Persistence:
+   → RDB snapshots (point-in-time backups)
+   → AOF (Append Only File) for durability
+   → Regular backups
+   → Disaster recovery plan
+
+5. Implement Application Resilience:
+   → Graceful degradation (work without cache)
+   → Circuit breaker pattern
+   → Retry logic with backoff
+   → Fallback to database
+```
+
+**Prevention:**
+- Always use Redis replication
+- Set up Redis Sentinel or Cluster
+- Enable persistence (RDB + AOF)
+- Regular backup testing
+- Monitor Redis health
+- Plan for disaster recovery
+- Test failover scenarios regularly
+
+---
+
+### Issue 8: Cache Warming / Cold Start Problems
+
+**The Problem:**
+- Service starts with empty cache
+- First requests are very slow
+- Database gets hammered on startup
+- Poor user experience initially
+- Takes time to reach optimal performance
+
+**Root Causes:**
+1. **No cache warming** - Service starts with empty cache
+2. **Traffic hits immediately** - Users request before cache is ready
+3. **Popular data not preloaded** - Most accessed data not cached
+4. **Slow initial requests** - All cache misses go to database
+5. **No gradual ramp-up** - Full traffic hits cold cache
+
+**Diagnosis Flow:**
+
+```
+Step 1: Identify cold start pattern
+  → Check response times after deployment
+  → Monitor cache hit rates over time
+  → Look for database spike on startup
+  → Check initial request latencies
+
+Step 2: Analyze traffic pattern
+  → When does traffic hit after deployment?
+  → What data is requested first?
+  → Are there predictable access patterns?
+```
+
+**Solution Flow:**
+
+```
+1. Implement Cache Warming:
+   → Preload popular data on startup
+   → Cache frequently accessed items
+   → Load data in background
+   → Use startup tasks/background services
+   → Warm cache before accepting traffic
+
+2. Gradual Traffic Ramp-up:
+   → Use load balancer health checks
+   → Don't send traffic until cache is warm
+   → Gradually increase traffic
+   → Monitor cache hit rates
+   → Scale up slowly
+
+3. Pre-cache Critical Data:
+   → Identify top 10-20 most accessed items
+   → Cache them on service start
+   → Use background job to refresh
+   → Keep critical data always cached
+   → Reduce initial database load
+
+4. Use Stale-While-Revalidate:
+   → Serve stale cache if available
+   → Refresh in background
+   → Always have some data to serve
+   → Better than cache miss
+   → Smooth user experience
+```
+
+**Prevention:**
+- Implement cache warming strategies
+- Pre-cache critical/popular data
+- Use health checks to delay traffic
+- Monitor and optimize warming process
+- Test cold start scenarios
+- Document warming procedures
+
+---
+
 ## 📝 Summary
 
 - **Caching** stores frequently used data in fast memory

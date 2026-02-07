@@ -146,25 +146,28 @@ Request 2: GET /api/products/1 → Cache hit (5ms) → 40x faster!
 
 ---
 
-### Step 2: Distributed Caching (IDistributedCache) ✅
+### Step 2: Distributed Caching (IDistributedCache) with Redis ✅
 **Status:** ✅ COMPLETED
 
 **What we implemented:**
-- ✅ Added `IDistributedCache` service (using in-memory implementation for POC)
-- ✅ Cache search results (5 minutes TTL)
-- ✅ Cache product categories (10 minutes TTL)
-- ✅ **Production Note:** `IDistributedCache` interface IS production-ready! 
-  - Currently using `AddDistributedMemoryCache()` (in-memory, NOT suitable for production)
-  - For production: Replace with `AddStackExchangeRedisCache()` - same interface, different implementation
-  - **No code changes needed** - the abstraction allows swapping implementations
+- ✅ Added `IDistributedCache` service using **Redis** (production-ready!)
+- ✅ Cache search results in Redis (5 minutes TTL)
+- ✅ Cache product categories in Redis (10 minutes TTL)
+- ✅ **Redis Configuration:** Using `AddStackExchangeRedisCache()` with connection string from appsettings.json
+- ✅ **Package:** `Microsoft.Extensions.Caching.StackExchangeRedis` (v10.0.2)
 
 **How it works:**
 - `IDistributedCache` is an **interface/abstraction** - production-ready design pattern
-- Currently using `AddDistributedMemoryCache()` - in-memory implementation (POC only)
-- For production: Use `AddStackExchangeRedisCache()` - Redis implementation
-- **Key Point:** Your controller code uses `IDistributedCache` interface - it doesn't care about the implementation!
-- Data is serialized to JSON before storing
-- Works with load-balanced services (when using Redis)
+- **Using Redis** via `AddStackExchangeRedisCache()` - true distributed caching
+- **Key Point:** Controller code uses `IDistributedCache` interface - implementation is Redis
+- Data is serialized to JSON before storing in Redis
+- **Shared cache** across multiple service instances (load-balanced scenarios)
+- Redis connection string: `localhost:6379` (configurable via appsettings.json)
+
+**Redis Setup:**
+- Run Redis locally: `docker run -d -p 6379:6379 redis`
+- Connection string configured in `appsettings.json`
+- Instance name: `ProductService` (for key prefixing)
 
 **Code location:**
 - `ProductsController.SearchProducts()` - caches search results

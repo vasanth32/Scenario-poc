@@ -13,9 +13,10 @@
 
 **Tech Stack:**
 - .NET 8 (ASP.NET Core Web API)
+- Redis (for distributed caching - local Docker or cloud)
 - AWS: API Gateway, Lambda, SQS, DynamoDB, CloudWatch
 - OR Azure: API Management, Functions, Service Bus, Cosmos DB, Application Insights
-- Docker (optional, for local testing)
+- Docker (for Redis and local testing)
 
 ---
 
@@ -49,14 +50,14 @@
        └─────────┬───────┴─────────┬───────┘
                  ▼                 ▼
          ┌──────────────┐  ┌──────────────┐
-         │   Database    │  │  Cache (Redis)│
-         │  (Optimized)  │  │  / CDN       │
+         │   Database    │  │  Redis Cache │
+         │  (Optimized)  │  │  (Distributed)│
          └──────────────┘  └──────────────┘
 ```
 
 ### Key Optimizations to Implement
 
-1. **Response Caching** (In-memory & Distributed)
+1. **Response Caching** (In-memory & Redis Distributed)
 2. **Database Connection Pooling**
 3. **Async/Await Pattern**
 4. **Response Compression**
@@ -106,24 +107,38 @@ PaymentService endpoints:
 ```
 Add response caching to ProductService:
 
-1. In-memory caching for frequently accessed products:
+1. Setup Redis for distributed caching:
+   - Install Redis locally (Docker: docker run -d -p 6379:6379 redis)
+   - Add package: Microsoft.Extensions.Caching.StackExchangeRedis
+   - Configure Redis connection in Program.cs:
+     builder.Services.AddStackExchangeRedisCache(options => {
+       options.Configuration = "localhost:6379";
+       options.InstanceName = "ProductService";
+     })
+
+2. In-memory caching for frequently accessed products:
    - Cache product details by ID (5 min TTL)
    - Cache product list (2 min TTL)
    - Use IMemoryCache with cache keys
 
-2. Distributed caching (Redis simulation or in-memory):
-   - Cache search results
-   - Cache product categories
-   - Use IDistributedCache
+3. Distributed caching with Redis:
+   - Cache search results in Redis (5 min TTL)
+   - Cache product categories in Redis (10 min TTL)
+   - Use IDistributedCache interface
+   - Serialize objects to JSON before storing
+   - Test with multiple service instances to verify shared cache
 
-3. HTTP Response Caching:
+4. HTTP Response Caching:
    - Add [ResponseCache] attributes
    - Set Cache-Control headers
    - Configure cache profiles in Program.cs
 
-4. Add cache invalidation on POST/PUT/DELETE
+5. Add cache invalidation on POST/PUT/DELETE:
+   - Clear Redis cache when data changes
+   - Invalidate both in-memory and distributed cache
 
-Include metrics to show cache hit/miss rates in logs.       
+Include metrics to show cache hit/miss rates in logs.
+Test distributed caching by running multiple service instances and verifying cache is shared.
 ```
 
 **Prompt 3: Add Database Connection Pooling**

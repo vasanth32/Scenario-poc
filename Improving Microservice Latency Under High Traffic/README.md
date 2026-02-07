@@ -19,6 +19,12 @@ Each microservice includes:
 - ✅ **Structured Logging** - Serilog with console and file logging
 - ✅ **CRUD Operations** - Basic create, read, update, delete operations
 
+**ProductService Additional Features:**
+- ✅ **In-Memory Caching** - Fast local cache for product details and lists
+- ✅ **Redis Distributed Caching** - Shared cache for search results and categories
+- ✅ **HTTP Response Caching** - Browser/CDN caching support
+- ✅ **Cache Metrics** - Track cache hit/miss rates
+
 ## ProductService
 
 **Port:** Default (5000/5001)
@@ -105,6 +111,40 @@ POST /api/payments/process
   "paymentMethod": "CreditCard"
 }
 ```
+
+## Redis Setup (Required for ProductService)
+
+ProductService uses Redis for distributed caching. You need to run Redis before starting ProductService.
+
+### Quick Setup with Docker
+
+```bash
+# Run Redis container
+docker run -d -p 6379:6379 --name redis-cache redis:latest
+
+# Verify Redis is running
+docker ps
+# Should see redis-cache container
+
+# Test Redis connection
+docker exec -it redis-cache redis-cli ping
+# Should return: PONG
+```
+
+### Configuration
+
+Redis connection string is configured in `ProductService/appsettings.json`:
+```json
+{
+  "ConnectionStrings": {
+    "Redis": "localhost:6379"
+  }
+}
+```
+
+**Note:** If Redis is not running, the service will fail to start. Make sure Redis is running before starting ProductService.
+
+For detailed Redis setup and testing instructions, see [REDIS_SETUP_GUIDE.md](REDIS_SETUP_GUIDE.md).
 
 ## Running the Services
 
@@ -231,11 +271,15 @@ Each service uses:
 - **Microsoft.Extensions.Diagnostics.HealthChecks** (8.0.0) - Health checks
 - **Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore** (8.0.0) - EF Core health checks
 
+**ProductService Additional Dependencies:**
+- **Microsoft.Extensions.Caching.StackExchangeRedis** (10.0.2) - Redis distributed caching
+- **StackExchange.Redis** (2.7.27) - Redis client library
+
 ## Next Steps
 
 To improve latency under high traffic, consider:
 
-1. **Caching** - Add Redis or in-memory caching
+1. **Caching** - ✅ **COMPLETED** - Redis distributed caching and in-memory caching implemented
 2. **Database Optimization** - Add indexes, connection pooling
 3. **Async Operations** - Ensure all I/O operations are async
 4. **Response Compression** - Enable response compression

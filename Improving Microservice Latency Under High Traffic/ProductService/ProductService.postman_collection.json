@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "product-service-collection",
 		"name": "ProductService - Caching Tests",
-		"description": "Collection to test ProductService endpoints with caching functionality",
+		"description": "Collection to test ProductService endpoints with caching functionality.\n\n**Distributed Caching Tests:**\n- Requires Redis running: `docker run -d -p 6379:6379 redis`\n- Requires two service instances:\n  - Instance 1: `dotnet run --urls \"http://localhost:5001\"`\n  - Instance 2: `dotnet run --urls \"http://localhost:5002\"`\n- Use the 'Distributed Caching - Two Instances' folder to test shared cache across instances",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -524,6 +524,375 @@
 			]
 		},
 		{
+			"name": "Distributed Caching - Two Instances",
+			"description": "Test distributed caching with two service instances sharing Redis cache. Make sure to start both instances: Instance 1 on port 5001 and Instance 2 on port 5002",
+			"item": [
+				{
+					"name": "Test 1: Search Results - Shared Cache",
+					"item": [
+						{
+							"name": "Instance 1: Search Laptop (Cache MISS)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{instance1Url}}/api/products/search?query=laptop",
+									"host": [
+										"{{instance1Url}}"
+									],
+									"path": [
+										"api",
+										"products",
+										"search"
+									],
+									"query": [
+										{
+											"key": "query",
+											"value": "laptop",
+											"description": "Search term"
+										}
+									]
+								},
+								"description": "First request to Instance 1 - will cache miss and store in Redis. Check logs: 'Cache MISS' then 'cached'"
+							},
+							"response": []
+						},
+						{
+							"name": "Instance 2: Search Laptop (Cache HIT from Redis!)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{instance2Url}}/api/products/search?query=laptop",
+									"host": [
+										"{{instance2Url}}"
+									],
+									"path": [
+										"api",
+										"products",
+										"search"
+									],
+									"query": [
+										{
+											"key": "query",
+											"value": "laptop",
+											"description": "Same search term"
+										}
+									]
+								},
+								"description": "Request to Instance 2 - should get data from Redis! Check logs: 'Cache HIT' and 'served from distributed cache'. This proves distributed caching works!"
+							},
+							"response": []
+						}
+					],
+					"description": "Test that search results cached in Instance 1 are available in Instance 2 via Redis"
+				},
+				{
+					"name": "Test 2: Categories - Shared Cache",
+					"item": [
+						{
+							"name": "Instance 1: Get Categories (Cache MISS)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{instance1Url}}/api/products/categories",
+									"host": [
+										"{{instance1Url}}"
+									],
+									"path": [
+										"api",
+										"products",
+										"categories"
+									]
+								},
+								"description": "First request to Instance 1 - will cache miss and store categories in Redis"
+							},
+							"response": []
+						},
+						{
+							"name": "Instance 2: Get Categories (Cache HIT from Redis!)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{instance2Url}}/api/products/categories",
+									"host": [
+										"{{instance2Url}}"
+									],
+									"path": [
+										"api",
+										"products",
+										"categories"
+									]
+								},
+								"description": "Request to Instance 2 - should get categories from Redis! Check logs: 'Cache HIT'"
+							},
+							"response": []
+						}
+					],
+					"description": "Test that categories cached in Instance 1 are available in Instance 2 via Redis"
+				},
+				{
+					"name": "Test 3: Cache Invalidation Across Instances",
+					"item": [
+						{
+							"name": "Step 1: Instance 1 - Get Categories (Cache)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{instance1Url}}/api/products/categories",
+									"host": [
+										"{{instance1Url}}"
+									],
+									"path": [
+										"api",
+										"products",
+										"categories"
+									]
+								},
+								"description": "Cache categories in Redis"
+							},
+							"response": []
+						},
+						{
+							"name": "Step 2: Instance 2 - Get Categories (Cache HIT)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{instance2Url}}/api/products/categories",
+									"host": [
+										"{{instance2Url}}"
+									],
+									"path": [
+										"api",
+										"products",
+										"categories"
+									]
+								},
+								"description": "Should get from cache (fast!)"
+							},
+							"response": []
+						},
+						{
+							"name": "Step 3: Instance 1 - Create Product (Invalidates Cache)",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Test Product for Cache Invalidation\",\n  \"description\": \"Testing cache invalidation across instances\",\n  \"price\": 99.99,\n  \"stock\": 10,\n  \"category\": \"Electronics\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{instance1Url}}/api/products",
+									"host": [
+										"{{instance1Url}}"
+									],
+									"path": [
+										"api",
+										"products"
+									]
+								},
+								"description": "Create product on Instance 1 - this will invalidate categories cache in Redis. Check logs: 'Invalidating caches'"
+							},
+							"response": []
+						},
+						{
+							"name": "Step 4: Instance 2 - Get Categories (Cache MISS - Sees Invalidation!)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{instance2Url}}/api/products/categories",
+									"host": [
+										"{{instance2Url}}"
+									],
+									"path": [
+										"api",
+										"products",
+										"categories"
+									]
+								},
+								"description": "Instance 2 should see the cache invalidation from Instance 1! Check logs: 'Cache MISS' - this proves cache invalidation works across instances!"
+							},
+							"response": []
+						}
+					],
+					"description": "Test that cache invalidation in Instance 1 affects Instance 2"
+				},
+				{
+					"name": "Test 4: Cache Metrics - Both Instances",
+					"item": [
+						{
+							"name": "Instance 1: Get Cache Metrics",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{instance1Url}}/api/products/cache/metrics",
+									"host": [
+										"{{instance1Url}}"
+									],
+									"path": [
+										"api",
+										"products",
+										"cache",
+										"metrics"
+									]
+								},
+								"description": "View cache metrics for Instance 1. Note: Each instance has its own metrics counter, but they share the same Redis cache."
+							},
+							"response": []
+						},
+						{
+							"name": "Instance 2: Get Cache Metrics",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{instance2Url}}/api/products/cache/metrics",
+									"host": [
+										"{{instance2Url}}"
+									],
+									"path": [
+										"api",
+										"products",
+										"cache",
+										"metrics"
+									]
+								},
+								"description": "View cache metrics for Instance 2"
+							},
+							"response": []
+						}
+					],
+					"description": "Check cache performance metrics for both instances"
+				},
+				{
+					"name": "Test 5: Multiple Search Queries",
+					"item": [
+						{
+							"name": "Instance 1: Search 'phone' (Cache MISS)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{instance1Url}}/api/products/search?query=phone",
+									"host": [
+										"{{instance1Url}}"
+									],
+									"path": [
+										"api",
+										"products",
+										"search"
+									],
+									"query": [
+										{
+											"key": "query",
+											"value": "phone"
+										}
+									]
+								},
+								"description": "Cache phone search in Redis"
+							},
+							"response": []
+						},
+						{
+							"name": "Instance 2: Search 'phone' (Cache HIT)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{instance2Url}}/api/products/search?query=phone",
+									"host": [
+										"{{instance2Url}}"
+									],
+									"path": [
+										"api",
+										"products",
+										"search"
+									],
+									"query": [
+										{
+											"key": "query",
+											"value": "phone"
+										}
+									]
+								},
+								"description": "Should get from Redis cache"
+							},
+							"response": []
+						},
+						{
+							"name": "Instance 1: Search 'book' (Cache MISS)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{instance1Url}}/api/products/search?query=book",
+									"host": [
+										"{{instance1Url}}"
+									],
+									"path": [
+										"api",
+										"products",
+										"search"
+									],
+									"query": [
+										{
+											"key": "query",
+											"value": "book"
+										}
+									]
+								},
+								"description": "Cache book search in Redis"
+							},
+							"response": []
+						},
+						{
+							"name": "Instance 2: Search 'book' (Cache HIT)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{instance2Url}}/api/products/search?query=book",
+									"host": [
+										"{{instance2Url}}"
+									],
+									"path": [
+										"api",
+										"products",
+										"search"
+									],
+									"query": [
+										{
+											"key": "query",
+											"value": "book"
+										}
+									]
+								},
+								"description": "Should get from Redis cache"
+							},
+							"response": []
+						}
+					],
+					"description": "Test multiple search queries across instances"
+				}
+			]
+		},
+		{
 			"name": "Load Testing",
 			"item": [
 				{
@@ -607,4 +976,3 @@
 		}
 	]
 }
-

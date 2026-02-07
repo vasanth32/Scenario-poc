@@ -31,17 +31,21 @@ builder.Services.AddMemoryCache();
 // Note: SizeLimit removed - if you want to limit cache size, you need to specify
 // Size property on each cache entry. For POC, we'll use unlimited cache.
 
-// 2. Distributed Caching (IDistributedCache)
+// 2. Distributed Caching (IDistributedCache) with Redis
 // IDistributedCache is a production-ready interface/abstraction
-// For POC: Using in-memory implementation (NOT suitable for production with multiple servers)
-// For Production: Replace with Redis implementation (same interface, no code changes needed)
-builder.Services.AddDistributedMemoryCache();
-// Production example:
-// builder.Services.AddStackExchangeRedisCache(options => 
-// {
-//     options.Configuration = "localhost:6379";
-//     options.InstanceName = "ProductService";
-// });
+// Using Redis for true distributed caching - shared across multiple service instances
+// Get Redis connection string from configuration (defaults to localhost:6379)
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis") 
+    ?? builder.Configuration["Redis:ConnectionString"] 
+    ?? "localhost:6379";
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = redisConnectionString;
+    options.InstanceName = "ProductService";
+});
+
+Log.Information("Redis distributed cache configured: {RedisConnection}", redisConnectionString);
 
 // 3. Cache Metrics Service
 // Tracks cache hit/miss rates for monitoring
@@ -77,6 +81,7 @@ builder.Services.AddDbContext<ProductDbContext>(options =>
 // Add Health Checks
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<ProductDbContext>();
+// Note: Redis health check can be added with AspNetCore.HealthChecks.Redis package if needed
 
 var app = builder.Build();
 
