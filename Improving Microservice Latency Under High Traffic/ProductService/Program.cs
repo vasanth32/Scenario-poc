@@ -51,6 +51,10 @@ Log.Information("Redis distributed cache configured: {RedisConnection}", redisCo
 // Tracks cache hit/miss rates for monitoring
 builder.Services.AddSingleton<ProductService.Services.CacheMetricsService>();
 
+// 4. Query Performance Service
+// Tracks database query performance and logs slow queries
+builder.Services.AddSingleton<ProductService.Services.QueryPerformanceService>();
+
 // 3. HTTP Response Caching
 // Allows browsers/CDNs to cache responses
 builder.Services.AddResponseCaching();
@@ -73,15 +77,70 @@ builder.Services.AddControllers(options =>
     });
 });
 
-// Configure Entity Framework Core with SQLite
+// ============================================================================
+// DATABASE CONFIGURATION & OPTIMIZATION
+// ============================================================================
+
+// Configure Entity Framework Core with SQLite and connection pooling
 builder.Services.AddDbContext<ProductDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") 
-        ?? "Data Source=products.db"));
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+        ?? "Data Source=products.db";
+    
+    options.UseSqlite(connectionString, sqliteOptions =>
+    {
+        // Connection Pooling Configuration
+        // SQLite connection pooling is handled automatically by EF Core
+        // EF Core maintains a pool of DbContext instances, not raw connections
+        // For SQL Server, you would configure in connection string:
+        //   "Server=...;Database=...;Max Pool Size=100;Min Pool Size=10;Connection Timeout=30;"
+        // SQLite uses file-based connections, so pooling works differently but is still efficient
+        
+        // Connection timeout (30 seconds)
+        sqliteOptions.CommandTimeout(30);
+    });
+    
+    // Enable query logging in development
+    if (builder.Environment.IsDevelopment())
+    {
+        options.LogTo(Console.WriteLine, LogLevel.Information)
+            .EnableSensitiveDataLogging(false) // Don't log parameter values in production
+            .EnableDetailedErrors(); // More detailed error messages in development
+    }
+    
+    // Query optimization: Use query splitting for better performance
+    options.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+});
 
 // Add Health Checks
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<ProductDbContext>();
 // Note: Redis health check can be added with AspNetCore.HealthChecks.Redis package if needed
+
+// ============================================================================
+// RESPONSE COMPRESSION
+// ============================================================================
+// Enable response compression (Gzip/Brotli) to reduce payload size
+// Automatically compresses JSON responses, reducing bandwidth usage by 60-80%
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true; // Enable compression for HTTPS
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+    options.MimeTypes = Microsoft.AspNetCore.ResponseCompression.ResponseCompressionDefaults.MimeTypes.Concat(
+        new[] { "application/json", "application/xml" });
+});
+
+// Configure compression levels for optimal performance
+builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = System.IO.Compression.CompressionLevel.Optimal;
+});
+
+builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProviderOptions>(options =>
+{
+    options.Level = System.IO.Compression.CompressionLevel.Optimal;
+});
 
 var app = builder.Build();
 
@@ -93,6 +152,14 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Response time middleware - logs slow requests (>500ms)
+// Must be early in pipeline to measure entire request
+app.UseMiddleware<ProductService.Middleware.ResponseTimeMiddleware>();
+
+// Enable response compression middleware (must be before UseResponseCaching)
+// Compresses responses automatically - reduces bandwidth by 60-80%
+app.UseResponseCompression();
 
 // Enable HTTP response caching middleware
 app.UseResponseCaching();

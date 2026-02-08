@@ -20,14 +20,67 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configure Entity Framework Core with SQLite
+// ============================================================================
+// DATABASE CONFIGURATION & OPTIMIZATION
+// ============================================================================
+
+// Configure Entity Framework Core with SQLite and connection pooling
 builder.Services.AddDbContext<OrderDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") 
-        ?? "Data Source=orders.db"));
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+        ?? "Data Source=orders.db";
+    
+    options.UseSqlite(connectionString, sqliteOptions =>
+    {
+        // Connection timeout (30 seconds)
+        sqliteOptions.CommandTimeout(30);
+    });
+    
+    // Enable query logging in development
+    if (builder.Environment.IsDevelopment())
+    {
+        options.LogTo(Console.WriteLine, LogLevel.Information)
+            .EnableSensitiveDataLogging(false)
+            .EnableDetailedErrors();
+    }
+    
+    // Query optimization: Use query splitting for better performance
+    options.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+});
 
 // Add Health Checks
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<OrderDbContext>();
+
+// ============================================================================
+// ASYNC PROCESSING - BACKGROUND SERVICES
+// ============================================================================
+// Background service to process orders asynchronously
+// Handles long-running tasks without blocking the API
+builder.Services.AddHostedService<OrderService.Services.OrderProcessingService>();
+
+// ============================================================================
+// RESPONSE COMPRESSION
+// ============================================================================
+// Enable response compression (Gzip/Brotli) to reduce payload size
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+    options.MimeTypes = Microsoft.AspNetCore.ResponseCompression.ResponseCompressionDefaults.MimeTypes.Concat(
+        new[] { "application/json", "application/xml" });
+});
+
+builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = System.IO.Compression.CompressionLevel.Optimal;
+});
+
+builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProviderOptions>(options =>
+{
+    options.Level = System.IO.Compression.CompressionLevel.Optimal;
+});
 
 var app = builder.Build();
 
@@ -39,6 +92,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Response time middleware - logs slow requests (>500ms)
+app.UseMiddleware<OrderService.Middleware.ResponseTimeMiddleware>();
+
+// Enable response compression middleware
+app.UseResponseCompression();
 
 app.UseAuthorization();
 

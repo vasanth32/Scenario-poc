@@ -42,13 +42,19 @@ public class ProductsController : ControllerBase
 
     /// <summary>
     /// GET /api/products?page=1&pageSize=10
-    /// Get all products with pagination
+    /// Get all products with pagination and metadata
     /// Uses in-memory caching (2 min TTL) and HTTP response caching
+    /// Returns pagination metadata: total, page, pageSize, totalPages, hasPreviousPage, hasNextPage
     /// </summary>
     [HttpGet]
     [ResponseCache(CacheProfileName = "ProductListCache")]
-    public async Task<ActionResult<IEnumerable<Product>>> GetProducts([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    public async Task<ActionResult<PagedResult<Product>>> GetProducts([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
+        // Validate pagination parameters
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 10;
+        if (pageSize > 100) pageSize = 100; // Limit max page size
+
         _logger.LogInformation("Getting products - Page: {Page}, PageSize: {PageSize}", page, pageSize);
 
         // Get cache version - increments when products are created/updated/deleted
@@ -60,24 +66,41 @@ public class ProductsController : ControllerBase
 
         // Cache key includes version, page and pageSize - version changes when data changes
         var cacheKey = $"{PRODUCT_LIST_CACHE_KEY_PREFIX}v{cacheVersion}:page:{page}:size:{pageSize}";
+        var totalCountCacheKey = $"{PRODUCT_LIST_CACHE_KEY_PREFIX}v{cacheVersion}:total";
 
         // Try to get from in-memory cache first
-        if (_memoryCache.TryGetValue(cacheKey, out List<Product>? cachedProducts))
+        if (_memoryCache.TryGetValue(cacheKey, out List<Product>? cachedProducts) &&
+            _memoryCache.TryGetValue(totalCountCacheKey, out int cachedTotal))
         {
             _cacheMetrics.RecordCacheHit(cacheKey);
             _logger.LogInformation("Product list served from cache - Page: {Page}, PageSize: {PageSize}", page, pageSize);
-            return Ok(cachedProducts);
+            
+            return Ok(new PagedResult<Product>
+            {
+                Data = cachedProducts,
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = cachedTotal
+            });
         }
 
         _cacheMetrics.RecordCacheMiss(cacheKey);
 
-        // Cache miss - fetch from database
-        var products = await _context.Products
-            .AsNoTracking() // Read-only query - no tracking needed
-            .OrderBy(p => p.Id)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+        // Cache miss - fetch from database using compiled query (faster!)
+        var skip = (page - 1) * pageSize;
+        var products = await CompiledQueries.GetProductsPaginatedAsync(_context, skip, pageSize)
             .ToListAsync();
+
+        // Get total count (cached separately for efficiency)
+        int totalCount;
+        if (!_memoryCache.TryGetValue(totalCountCacheKey, out totalCount))
+        {
+            totalCount = await CompiledQueries.GetProductCountAsync(_context);
+            _memoryCache.Set(totalCountCacheKey, totalCount, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2)
+            });
+        }
 
         // Cache the result for 2 minutes
         var cacheOptions = new MemoryCacheEntryOptions
@@ -90,7 +113,13 @@ public class ProductsController : ControllerBase
         _memoryCache.Set(cacheKey, products, cacheOptions);
         _logger.LogInformation("Product list cached - Page: {Page}, PageSize: {PageSize}", page, pageSize);
 
-        return Ok(products);
+        return Ok(new PagedResult<Product>
+        {
+            Data = products,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount
+        });
     }
 
     /// <summary>
@@ -116,10 +145,8 @@ public class ProductsController : ControllerBase
 
         _cacheMetrics.RecordCacheMiss(cacheKey);
 
-        // Cache miss - fetch from database
-        var product = await _context.Products
-            .AsNoTracking() // Read-only query
-            .FirstOrDefaultAsync(p => p.Id == id);
+        // Cache miss - fetch from database using compiled query (faster!)
+        var product = await CompiledQueries.GetProductByIdAsync(_context, id);
 
         if (product == null)
         {

@@ -56,7 +56,8 @@ public class OrdersController : ControllerBase
 
     /// <summary>
     /// POST /api/orders
-    /// Create a new order
+    /// Create a new order (asynchronous processing)
+    /// Returns 202 Accepted - order is queued for background processing
     /// </summary>
     [HttpPost]
     public async Task<ActionResult<Order>> CreateOrder([FromBody] CreateOrderRequest request)
@@ -70,15 +71,26 @@ public class OrdersController : ControllerBase
             TotalAmount = request.TotalAmount,
             CustomerName = request.CustomerName,
             CustomerEmail = request.CustomerEmail,
-            Status = "Pending"
+            Status = "Pending" // Will be processed asynchronously by OrderProcessingService
         };
 
         _context.Orders.Add(order);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Order created with ID: {OrderId}", order.Id);
+        _logger.LogInformation("Order created with ID: {OrderId} - Status: Pending (will be processed asynchronously)", order.Id);
 
-        return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, order);
+        // Return 202 Accepted - order accepted for processing
+        // Client can poll /api/orders/{id} to check status
+        return AcceptedAtAction(
+            nameof(GetOrder),
+            new { id = order.Id },
+            new
+            {
+                message = "Order accepted for processing",
+                orderId = order.Id,
+                status = order.Status,
+                statusUrl = $"/api/orders/{order.Id}"
+            });
     }
 }
 
