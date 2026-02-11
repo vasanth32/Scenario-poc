@@ -1,3 +1,5 @@
+using Microsoft.ApplicationInsights;
+
 namespace ProductService.Services;
 
 /// <summary>
@@ -8,10 +10,12 @@ public class QueryPerformanceService
 {
     private readonly ILogger<QueryPerformanceService> _logger;
     private readonly long _slowQueryThresholdMs;
+    private readonly TelemetryClient? _telemetryClient;
 
-    public QueryPerformanceService(ILogger<QueryPerformanceService> logger)
+    public QueryPerformanceService(ILogger<QueryPerformanceService> logger, TelemetryClient? telemetryClient = null)
     {
         _logger = logger;
+        _telemetryClient = telemetryClient;
         _slowQueryThresholdMs = 200; // Log queries slower than 200ms
     }
 
@@ -20,6 +24,9 @@ public class QueryPerformanceService
     /// </summary>
     public void LogQueryPerformance(string operation, long elapsedMilliseconds, string? additionalInfo = null)
     {
+        // Track database query duration as a custom metric
+        _telemetryClient?.TrackMetric("DatabaseQueryDurationMs", elapsedMilliseconds);
+
         if (elapsedMilliseconds > _slowQueryThresholdMs)
         {
             _logger.LogWarning(

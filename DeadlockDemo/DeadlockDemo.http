@@ -1,0 +1,6 @@
+@DeadlockDemo_HostAddress = http://localhost:5160
+
+GET {{DeadlockDemo_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

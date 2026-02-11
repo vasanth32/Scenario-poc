@@ -3,6 +3,25 @@
 ## Overview
 This document tracks the progress of implementing microservice optimizations for latency improvement under high traffic.
 
+## Current Status (2026-02-09)
+
+- **Runtime environment**
+  - All three services (`ProductService`, `OrderService`, `PaymentService`) are running locally with SQLite and Redis (`redis-cache` Docker container) on `localhost:6379`.
+  - Application logs and health checks (`/health`) have been validated from PowerShell using `curl`.
+- **ProductService fixes**
+  - Fixed EF Core compiled query usage by iterating the `IAsyncEnumerable<Product>` instead of calling `ToListAsync()` directly.
+  - Removed `UseQuerySplittingBehavior` configuration that was not supported by the current EF Core version in this project.
+  - Hardened `ResponseTimeMiddleware` to only append the `X-Response-Time` header when the response has not already started, preventing header write exceptions under load.
+  - Adjusted the pipeline to avoid HTTPS redirection conflicts when running on plain HTTP for local testing.
+- **Load testing & caching**
+  - Repaired and simplified `LoadTest.ps1` so it runs cleanly on Windows PowerShell (string interpolation, emoji/encoding, and health-check parsing issues fixed).
+  - Successfully executed multiple load-test runs against all three services, generating HTML reports such as `LoadTestReport_20260209_144050.html`.
+  - Verified Redis connectivity (`docker exec -it redis-cache redis-cli ping`) and confirmed `ProductService` is using `AddStackExchangeRedisCache` with `localhost:6379`.
+  - Warmed up cache-related endpoints and confirmed `GET /api/products/cache/metrics` returns live metrics (hits, misses, total, hitRate) and is integrated into the HTML report’s “Cache Performance (ProductService)” section.
+- **Next immediate steps**
+  - Tune load-test parameters (concurrency, duration) and traffic mix to drive higher cache hit rates and more realistic throughput numbers.
+  - Begin Phase 6 (Monitoring): wire metrics (response times, cache hit rate, errors) into a dashboard or APM tool and compare against the baseline targets documented below.
+
 ---
 
 ## 🎓 Understanding Caching (Simple Explanation)
@@ -899,7 +918,197 @@ GET http://localhost:5002/api/orders/{id}
 
 ---
 
-## ⏳ Phase 5: Load Testing (NOT STARTED)
+## ✅ Phase 5: Load Testing (COMPLETED)
+
+### Status: ✅ DONE
+
+**What we implemented:**
+
+1. **PowerShell Load Testing Script** (`LoadTest.ps1`)
+   - Comprehensive load testing script for Windows
+   - Supports Windows PowerShell 5.1+ and PowerShell Core
+   - Comprehensive metrics collection
+
+3. **Comprehensive Metrics Collection**
+   - ✅ Response time percentiles (p50, p95, p99)
+   - ✅ Throughput (requests/second)
+   - ✅ Error rate calculation
+   - ✅ Cache hit rate tracking (ProductService)
+   - ✅ Service health monitoring
+
+4. **Gradual Load Increase**
+   - ✅ Configurable ramp-up steps
+   - ✅ Starts with low concurrent users
+   - ✅ Gradually increases to maximum load
+   - ✅ Allows services to adapt to increasing load
+
+5. **HTML Report Generation**
+   - ✅ Beautiful, detailed HTML reports
+   - ✅ Before/after cache metrics comparison
+   - ✅ Visual indicators (green/yellow/red) for performance status
+   - ✅ Comprehensive service metrics tables
+
+### Key Features
+
+**1. Concurrent Request Generation**
+- Supports configurable concurrent users
+- Random endpoint selection for realistic load patterns
+- Continuous request generation until test duration ends
+- Proper error handling and timeout management
+
+**2. Metrics Calculation**
+- **Response Time Percentiles**:
+  - P50 (Median): 50% of requests faster than this
+  - P95: 95% of requests faster than this
+  - P99: 99% of requests faster than this
+- **Throughput**: Total requests / test duration
+- **Error Rate**: (Failed requests / Total requests) × 100
+- **Cache Hit Rate**: (Cache hits / Total cache operations) × 100
+
+**3. Service Health Monitoring**
+- Health checks before starting tests
+- Skips unhealthy services automatically
+- Monitors service availability during tests
+
+**4. Cache Performance Tracking**
+- Gets baseline cache metrics before test
+- Gets final cache metrics after test
+- Compares before/after cache performance
+- Shows cache hit rate improvements
+
+### Script Usage
+
+```powershell
+# Basic usage
+.\LoadTest.ps1
+
+# Custom configuration
+.\LoadTest.ps1 -MaxConcurrentUsers 500 -DurationSeconds 120 -RampUpSteps 5
+
+# Custom service URLs
+.\LoadTest.ps1 -ProductServiceUrl "http://localhost:5001" -OrderServiceUrl "http://localhost:5002" -PaymentServiceUrl "http://localhost:5003"
+```
+
+### Test Scenarios
+
+**1. Light Load (Development Testing)**
+- 10 concurrent users, 30 seconds
+- Quick validation that services work correctly
+
+**2. Medium Load (Staging Testing)**
+- 100 concurrent users, 60 seconds
+- Typical production-like load testing
+
+**3. High Load (Stress Testing)**
+- 500 concurrent users, 120 seconds
+- Testing system limits and breaking points
+
+**4. Extreme Load (Capacity Planning)**
+- 1000 concurrent users, 180 seconds
+- Understanding maximum capacity
+
+### Key Files Created
+
+1. **LoadTest.ps1** (PowerShell Script)
+   - Main load testing script for Windows
+   - Supports all required metrics
+   - Generates HTML reports
+
+2. **LOAD_TESTING_GUIDE.md** (Documentation)
+   - Comprehensive usage guide
+   - Troubleshooting tips
+   - Best practices
+   - Metric interpretation guide
+
+### Metrics Interpretation
+
+**Good Performance Indicators:**
+- ✅ P50 < 100ms
+- ✅ P95 < 500ms
+- ✅ P99 < 1000ms
+- ✅ Error Rate < 1%
+- ✅ Cache Hit Rate > 70%
+
+**Warning Signs:**
+- ⚠️ P95 > 1000ms
+- ⚠️ P99 > 2000ms
+- ⚠️ Error Rate 1-5%
+- ⚠️ Cache Hit Rate < 50%
+
+**Critical Issues:**
+- ❌ P95 > 2000ms
+- ❌ P99 > 5000ms
+- ❌ Error Rate > 5%
+- ❌ Service Unhealthy
+
+### Example Test Results
+
+```
+========================================
+   Test Summary
+========================================
+
+[ProductService]
+  Total Requests: 1250
+  Successful: 1248
+  Error Rate: 0.16%
+  Throughput: 20.83 req/s
+  Avg Response Time: 45.23 ms
+  P50: 42.10 ms
+  P95: 89.50 ms
+  P99: 156.30 ms
+
+[Cache Metrics]
+  Hit Rate: 0.00% → 78.50%
+  Total Operations: 0 → 1250
+```
+
+### Testing Instructions
+
+**1. Prerequisites:**
+- All services running (ProductService:5001, OrderService:5002, PaymentService:5003)
+- Redis running (for ProductService distributed caching)
+- PowerShell (Windows PowerShell 5.1+ or PowerShell Core)
+
+**2. Run Load Test:**
+```powershell
+# Start with light load
+.\LoadTest.ps1 -MaxConcurrentUsers 10 -DurationSeconds 30
+
+# Gradually increase load
+.\LoadTest.ps1 -MaxConcurrentUsers 100 -DurationSeconds 60
+.\LoadTest.ps1 -MaxConcurrentUsers 500 -DurationSeconds 120
+```
+
+**3. Review Results:**
+- Check console output for summary
+- Open generated HTML report for detailed metrics
+- Compare before/after cache metrics
+- Identify performance bottlenecks
+
+**4. Analyze Report:**
+- Review response time percentiles
+- Check error rates
+- Monitor cache hit rate improvements
+- Identify slow endpoints
+
+### Best Practices
+
+✅ **Start Small**: Begin with low concurrent users and gradually increase
+✅ **Run Multiple Times**: Run tests multiple times for consistent results
+✅ **Compare Before/After**: Run tests before and after optimizations
+✅ **Monitor Resources**: Watch CPU, memory, and network during tests
+✅ **Review Logs**: Check service logs after tests for issues
+
+### Next Steps
+
+- Run baseline load tests to establish performance metrics
+- Apply optimizations based on test results
+- Re-run tests to measure improvements
+- Document performance baselines and improvements
+- Set up continuous performance monitoring
+
+---
 
 ## ⏳ Phase 6: Monitoring (NOT STARTED)
 

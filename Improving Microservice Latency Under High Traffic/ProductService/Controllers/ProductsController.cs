@@ -88,8 +88,11 @@ public class ProductsController : ControllerBase
 
         // Cache miss - fetch from database using compiled query (faster!)
         var skip = (page - 1) * pageSize;
-        var products = await CompiledQueries.GetProductsPaginatedAsync(_context, skip, pageSize)
-            .ToListAsync();
+        var products = new List<Product>();
+        await foreach (var product in CompiledQueries.GetProductsPaginatedAsync(_context, skip, pageSize))
+        {
+            products.Add(product);
+        }
 
         // Get total count (cached separately for efficiency)
         int totalCount;

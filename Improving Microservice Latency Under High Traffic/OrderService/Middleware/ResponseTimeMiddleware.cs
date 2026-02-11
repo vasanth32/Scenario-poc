@@ -1,3 +1,5 @@
+using Microsoft.ApplicationInsights;
+
 namespace OrderService.Middleware;
 
 /// <summary>
@@ -7,12 +9,17 @@ public class ResponseTimeMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<ResponseTimeMiddleware> _logger;
+    private readonly TelemetryClient? _telemetryClient;
     private const long SlowRequestThresholdMs = 500;
 
-    public ResponseTimeMiddleware(RequestDelegate next, ILogger<ResponseTimeMiddleware> logger)
+    public ResponseTimeMiddleware(
+        RequestDelegate next,
+        ILogger<ResponseTimeMiddleware> logger,
+        TelemetryClient? telemetryClient = null)
     {
         _next = next;
         _logger = logger;
+        _telemetryClient = telemetryClient;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -22,6 +29,9 @@ public class ResponseTimeMiddleware
         stopwatch.Stop();
 
         var elapsedMilliseconds = stopwatch.ElapsedMilliseconds;
+
+        // Track request duration metric
+        _telemetryClient?.TrackMetric("RequestDurationMs", elapsedMilliseconds);
 
         if (elapsedMilliseconds > SlowRequestThresholdMs)
         {

@@ -21,6 +21,14 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // ============================================================================
+// APPLICATION INSIGHTS - DISTRIBUTED TRACING & METRICS
+// ============================================================================
+// Application Insights picks up configuration from:
+// - APPLICATIONINSIGHTS_CONNECTION_STRING environment variable, or
+// - "ApplicationInsights:ConnectionString" in appsettings.json
+builder.Services.AddApplicationInsightsTelemetry();
+
+// ============================================================================
 // DATABASE CONFIGURATION & OPTIMIZATION
 // ============================================================================
 
@@ -43,9 +51,6 @@ builder.Services.AddDbContext<PaymentDbContext>(options =>
             .EnableSensitiveDataLogging(false)
             .EnableDetailedErrors();
     }
-    
-    // Query optimization: Use query splitting for better performance
-    options.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
 });
 
 // Add Health Checks

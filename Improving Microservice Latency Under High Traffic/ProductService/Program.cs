@@ -21,6 +21,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // ============================================================================
+// APPLICATION INSIGHTS - DISTRIBUTED TRACING & METRICS
+// ============================================================================
+// Application Insights picks up configuration from:
+// - APPLICATIONINSIGHTS_CONNECTION_STRING environment variable, or
+// - "ApplicationInsights:ConnectionString" in appsettings.json
+// This will automatically track requests, dependencies, and logs.
+builder.Services.AddApplicationInsightsTelemetry();
+
+// ============================================================================
 // CACHING CONFIGURATION
 // ============================================================================
 
@@ -48,11 +57,11 @@ builder.Services.AddStackExchangeRedisCache(options =>
 Log.Information("Redis distributed cache configured: {RedisConnection}", redisConnectionString);
 
 // 3. Cache Metrics Service
-// Tracks cache hit/miss rates for monitoring
+// Tracks cache hit/miss rates for monitoring and pushes metrics to Application Insights
 builder.Services.AddSingleton<ProductService.Services.CacheMetricsService>();
 
 // 4. Query Performance Service
-// Tracks database query performance and logs slow queries
+// Tracks database query performance, logs slow queries, and emits metrics
 builder.Services.AddSingleton<ProductService.Services.QueryPerformanceService>();
 
 // 3. HTTP Response Caching
@@ -107,9 +116,6 @@ builder.Services.AddDbContext<ProductDbContext>(options =>
             .EnableSensitiveDataLogging(false) // Don't log parameter values in production
             .EnableDetailedErrors(); // More detailed error messages in development
     }
-    
-    // Query optimization: Use query splitting for better performance
-    options.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
 });
 
 // Add Health Checks
@@ -150,8 +156,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseHttpsRedirection();
 
 // Response time middleware - logs slow requests (>500ms)
 // Must be early in pipeline to measure entire request

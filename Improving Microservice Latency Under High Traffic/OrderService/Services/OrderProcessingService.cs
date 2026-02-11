@@ -1,3 +1,4 @@
+using Microsoft.ApplicationInsights;
 using Microsoft.EntityFrameworkCore;
 using OrderService.Data;
 using OrderService.Models;
@@ -12,11 +13,16 @@ public class OrderProcessingService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<OrderProcessingService> _logger;
+    private readonly TelemetryClient? _telemetryClient;
 
-    public OrderProcessingService(IServiceProvider serviceProvider, ILogger<OrderProcessingService> logger)
+    public OrderProcessingService(
+        IServiceProvider serviceProvider,
+        ILogger<OrderProcessingService> logger,
+        TelemetryClient? telemetryClient = null)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _telemetryClient = telemetryClient;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -53,12 +59,17 @@ public class OrderProcessingService : BackgroundService
             .Take(10) // Process 10 at a time
             .ToListAsync(cancellationToken);
 
-        if (!pendingOrders.Any())
+        var queueDepth = pendingOrders.Count;
+
+        // Track queue depth as a custom metric for monitoring
+        _telemetryClient?.TrackMetric("OrdersQueueDepth", queueDepth);
+
+        if (queueDepth == 0)
         {
             return; // No pending orders
         }
 
-        _logger.LogInformation("Processing {Count} pending orders", pendingOrders.Count);
+        _logger.LogInformation("Processing {Count} pending orders", queueDepth);
 
         foreach (var order in pendingOrders)
         {
