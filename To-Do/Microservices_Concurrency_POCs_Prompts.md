@@ -17,27 +17,6 @@ Run them **one-by-one** (each POC separate project or separate folder).
 - Improve observability by adding logging and troubleshooting flows under failure conditions.
 ---
 
-## POC 2 — Optimistic Concurrency (RowVersion)
-
-### Prompt
-
-```text
-Create a new Web API project named OptimisticConcurrencyDemo.
-
-Create Orders table:
-OrderId PK
-ProductId
-Quantity
-Status
-RowVersion (rowversion/timestamp column)
-
-Configure EF Core concurrency token using [Timestamp].
-
-Create PUT /api/orders/update endpoint that updates order.
-
-Simulate concurrent update by calling same endpoint twice and handle DbUpdateConcurrencyException with retry logic.
-```
-
 ---
 
 ## POC 3 — Distributed Transaction Problem
@@ -137,22 +116,26 @@ Add logging to show retry attempts and circuit state.
 
 ---
 
-## Very Important (How Seniors Actually Learn This Fast)
-
-Do not try to build all at once.
-
-Recommended weekly flow:
-
-* Week 1 → POC 1 + POC 2
-* Week 2 → POC 3
-* Week 3 → POC 4
-* Week 4 → POC 5
-* Week 5 → POC 6 + 7
-
-Within **30–40 days**, your **microservices concurrency understanding becomes senior-level**.
-
----
-
-If you want, I can next give you **exact GitHub-ready solution folder structure and naming standard** that interviewers love when you show POC projects.
+## Done
 
 
+## POC 2 — Optimistic Concurrency (RowVersion)
+
+### Prompt
+
+```text
+Create a new Web API project named OptimisticConcurrencyDemo.
+
+Create Orders table:
+OrderId PK
+ProductId
+Quantity
+Status
+RowVersion (rowversion/timestamp column)
+
+Configure EF Core concurrency token using [Timestamp].
+
+Create PUT /api/orders/update endpoint that updates order.
+
+Simulate concurrent update by calling same endpoint twice and handle DbUpdateConcurrencyException with retry logic.
+```
