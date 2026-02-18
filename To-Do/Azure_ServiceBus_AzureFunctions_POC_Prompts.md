@@ -53,7 +53,7 @@ Keep it beginner-friendly, concise, and motivating (max 2–3 paragraphs).
     - Open the namespace.
     - Go to **Queues** → **+ Queue** and create a queue named `orders-queue`.
   - Get the **connection string**:
-  (Endpoint=sb://your-namespace.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=YOUR_KEY_HERE)
+  
     - In the namespace, go to **Shared access policies**.
     - Click `RootManageSharedAccessKey` (or create a specific policy).
     - Copy the **Primary connection string** – you will use it in both the API and Function.
