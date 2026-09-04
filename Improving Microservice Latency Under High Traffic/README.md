@@ -146,6 +146,13 @@ Redis connection string is configured in `ProductService/appsettings.json`:
 
 For detailed Redis setup and testing instructions, see [REDIS_SETUP_GUIDE.md](REDIS_SETUP_GUIDE.md).
 
+## Static Analysis (SonarQube)
+
+This repo includes a local SonarQube setup (Docker Compose) plus notes on reading results and a suggested triage workflow:
+
+- `sonarqube/docker-compose.yml`
+- `sonarqube/ANALYSIS.md`
+
 ## Running the Services
 
 ### Option 1: Run Each Service Separately

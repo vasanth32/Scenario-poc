@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ProjectInfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.sonarsource.com/msbuild/integration/2015/1">
+  <ProjectName>PaymentService</ProjectName>
+  <ProjectLanguage>C#</ProjectLanguage>
+  <ProjectType>Product</ProjectType>
+  <ProjectGuid>cc2b64c7-873d-45fb-b122-56100a22e323</ProjectGuid>
+  <FullPath>D:\PracticeProjects\Scenario-poc\Improving Microservice Latency Under High Traffic\PaymentService\PaymentService.csproj</FullPath>
+  <IsExcluded>false</IsExcluded>
+  <AnalysisResultFiles>
+    <AnalysisResultFile Id="FilesToAnalyze" Location="D:\PracticeProjects\Scenario-poc\Improving Microservice Latency Under High Traffic\.sonarqube\conf\1\FilesToAnalyze.txt" />
+  </AnalysisResultFiles>
+  <AnalysisSettings>
+    <Property Name="sonar.cs.roslyn.reportFilePaths">D:\PracticeProjects\Scenario-poc\Improving Microservice Latency Under High Traffic\.sonarqube\out\1\Issues.json</Property>
+    <Property Name="sonar.cs.analyzer.projectOutPaths">D:\PracticeProjects\Scenario-poc\Improving Microservice Latency Under High Traffic\.sonarqube\out\1</Property>
+    <Property Name="sonar.cs.scanner.telemetry">D:\PracticeProjects\Scenario-poc\Improving Microservice Latency Under High Traffic\.sonarqube\out\1\Telemetry.json</Property>
+  </AnalysisSettings>
+  <Configuration>Release</Configuration>
+  <Platform>AnyCPU</Platform>
+  <TargetFramework>net8.0</TargetFramework>
+</ProjectInfo>

@@ -1,0 +1,167 @@
+{
+  "info": {
+    "_postman_id": "d2ccdbd4-22c1-4f7f-9b4d-9c5d1a0d1e01",
+    "name": "Wire API - Idempotency Test Scenarios",
+    "description": "Senior .NET interview practice collection for idempotency, concurrency, failure recovery, financial validation, and state-transition testing. Import this collection and set the baseUrl environment variable. The current API implements POST /api/wires only; preparation-only scenarios are explicitly marked where an endpoint or failure hook does not exist yet.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://localhost:7127" },
+    { "key": "firstWireId", "value": "" },
+    { "key": "test002WireId", "value": "" },
+    { "key": "test003WireId", "value": "" },
+    { "key": "test004WireId", "value": "" },
+    { "key": "lastWireId", "value": "" },
+    { "key": "concurrentKey", "value": "CONCURRENT-001" },
+    { "key": "processingKey", "value": "PROCESSING-001" },
+    { "key": "failedKey", "value": "FAILED-001" },
+    { "key": "approvalWireId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Basic Idempotency",
+      "description": "Run these requests in order. SQL Server check: TEST-001 should occur once in IdempotencyRecords and its WireRequestId should point to exactly one completed WireRequests row.",
+      "item": [
+        {
+          "name": "1. First request with new key",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Idempotency-Key", "value": "TEST-001" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"fromAccount\": \"ACC001\",\n  \"toAccount\": \"ACC002\",\n  \"amount\": 50000,\n  \"currency\": \"USD\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/wires", "host": [ "{{baseUrl}}" ], "path": [ "api", "wires" ] },
+            "description": "Scenario: first use of TEST-001. Observe HTTP 200, a WireRequestId, and Completed status. This proves the business transaction and idempotency record are created. In SQL Server verify one wire and one idempotency row."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Status is 200', function () { pm.response.to.have.status(200); });", "const body = pm.response.json();", "const id = body.WireRequestId || body.wireRequestId;", "pm.test('Response contains WireRequestId', function () { pm.expect(id).to.exist; });", "pm.collectionVariables.set('firstWireId', String(id));", "pm.collectionVariables.set('lastWireId', String(id));", "pm.test('Status is Completed', function () { pm.expect(body.Status || body.status).to.eql('Completed'); });", "pm.test('Response time is under 2 seconds', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"] } }]
+        },
+        {
+          "name": "2. Retry exact same request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Idempotency-Key", "value": "TEST-001" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"fromAccount\": \"ACC001\",\n  \"toAccount\": \"ACC002\",\n  \"amount\": 50000,\n  \"currency\": \"USD\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/wires", "host": [ "{{baseUrl}}" ], "path": [ "api", "wires" ] },
+            "description": "Scenario: retry the same logical request. Observe 200 and the same WireRequestId, with no new wire. This is the core financial idempotency guarantee: network retries must not transfer funds twice."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Status is 200', function () { pm.response.to.have.status(200); });", "const body = pm.response.json();", "const id = String(body.WireRequestId || body.wireRequestId);", "pm.test('WireRequestId matches first request', function () { pm.expect(id).to.eql(pm.collectionVariables.get('firstWireId')); });", "pm.test('Previous-result message is returned', function () { pm.expect(body.Message || body.message).to.eql('Returning previous result.'); });"] } }]
+        },
+        {
+          "name": "3. Repeat same request multiple times",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Idempotency-Key", "value": "TEST-001" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"fromAccount\": \"ACC001\",\n  \"toAccount\": \"ACC002\",\n  \"amount\": 50000,\n  \"currency\": \"USD\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/api/wires", "host": [ "{{baseUrl}}" ], "path": [ "api", "wires" ] },
+            "description": "Scenario: run this request 3 or more times with Collection Runner. Every response should be 200 and return firstWireId. SQL Server should still contain one TEST-001 idempotency row and one linked wire."
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Status is 200', function () { pm.response.to.have.status(200); });", "const body = pm.response.json();", "pm.test('No different wire is returned', function () { pm.expect(String(body.WireRequestId || body.wireRequestId)).to.eql(pm.collectionVariables.get('firstWireId')); });"] } }]
+        }
+      ]
+    },
+    {
+      "name": "2. Idempotency Key Validation",
+      "description": "Missing and empty keys should be rejected before any database write. TEST-002 creates a separate logical operation; reusing TEST-001 with a changed payload must be a conflict.",
+      "item": [
+        { "name": "4. Missing Idempotency-Key", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"toAccount\":\"ACC002\",\"amount\":50000,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Scenario: no idempotency header. Expected 400 Bad Request and no WireRequests or IdempotencyRecords row." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Status is 400', function () { pm.response.to.have.status(400); });", "pm.test('No successful wire ID is returned', function () { pm.expect(pm.response.text()).to.not.match(/WireRequestId|wireRequestId/); });"] } }] },
+        { "name": "5. Empty Idempotency-Key", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"toAccount\":\"ACC002\",\"amount\":50000,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Scenario: blank key. Expected 400 Bad Request, no successful wire ID, and no database rows." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Status is 400', function () { pm.response.to.have.status(400); });", "pm.test('No successful wire ID is returned', function () { pm.expect(pm.response.text()).to.not.match(/WireRequestId|wireRequestId/); });"] } }] },
+        { "name": "6. New key with different request", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "TEST-002" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"toAccount\":\"ACC002\",\"amount\":75000,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Scenario: new key and new amount. Expected 200 and a new wire. A new idempotency key represents a different logical operation." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Status is 200', function () { pm.response.to.have.status(200); });", "const body = pm.response.json();", "const id = String(body.WireRequestId || body.wireRequestId);", "pm.collectionVariables.set('test002WireId', id);", "pm.test('New WireRequestId exists', function () { pm.expect(id).to.exist; });"] } }] },
+        { "name": "7. Same key with different payload", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "TEST-001" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"toAccount\":\"ACC002\",\"amount\":90000,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Scenario: TEST-001 is reused with amount 90000. Expected 409 Conflict and no second wire. RequestHash detects accidental key reuse that could otherwise alter a financial transfer." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Status is 409 Conflict', function () { pm.response.to.have.status(409); });", "pm.test('No successful wire ID is returned', function () { pm.expect(pm.response.text()).to.not.match(/WireRequestId|wireRequestId/); });"] } }] }
+      ]
+    },
+    {
+      "name": "3. Different Keys",
+      "description": "The same payload under different keys is intentionally treated as a new operation. Verify each key has its own idempotency row and wire.",
+      "item": [
+        { "name": "8. Same payload, key TEST-003", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "TEST-003" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"toAccount\":\"ACC002\",\"amount\":50000,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Expected 200 and a new WireRequestId different from firstWireId. Different keys mean different logical operations." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Status is 200', function () { pm.response.to.have.status(200); });", "const id = String((pm.response.json().WireRequestId || pm.response.json().wireRequestId));", "pm.collectionVariables.set('test003WireId', id);", "pm.test('Wire is different from TEST-001', function () { pm.expect(id).to.not.eql(pm.collectionVariables.get('firstWireId')); });"] } }] },
+        { "name": "9. Different payload, key TEST-004", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "TEST-004" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"toAccount\":\"ACC002\",\"amount\":100000,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Expected 200 and another new wire for 100000 USD. Verify RequestHash and business amount in SQL Server." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Status is 200', function () { pm.response.to.have.status(200); });", "const id = String((pm.response.json().WireRequestId || pm.response.json().wireRequestId));", "pm.collectionVariables.set('test004WireId', id);", "pm.test('WireRequestId exists', function () { pm.expect(id).to.exist; });"] } }] }
+      ]
+    },
+    {
+      "name": "4. Processing State",
+      "description": "Preparation: pause after the first SaveChangesAsync or insert an IdempotencyRecords row manually with Key PROCESSING-001, matching RequestHash, Status Processing, and no completed timestamp. Then run request 10. Current API returns 409 for Processing. For FAILED status, current code treats any non-Processing status as completed and returns 200 with that status; this behavior should be improved before production.",
+      "item": [
+        { "name": "10. Existing Processing record", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "{{processingKey}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"toAccount\":\"ACC002\",\"amount\":50000,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Requires database preparation described in the folder. Expected 409 Conflict, no new wire, and the existing Processing record remains unchanged." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Status is 409', function () { pm.response.to.have.status(409); });", "pm.test('No successful wire ID is returned', function () { pm.expect(pm.response.text()).to.not.match(/WireRequestId|wireRequestId/); });"] } }] },
+        { "name": "11. Completed state retry", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "TEST-001" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"toAccount\":\"ACC002\",\"amount\":50000,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Expected 200 with the previous WireRequestId and Completed status. This is safe recovery after a client timeout." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Status is 200', function () { pm.response.to.have.status(200); });", "const body = pm.response.json();", "pm.test('Previous wire is returned', function () { pm.expect(String(body.WireRequestId || body.wireRequestId)).to.eql(pm.collectionVariables.get('firstWireId')); });"] } }] },
+        { "name": "12. Failed state retry", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "{{failedKey}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"toAccount\":\"ACC002\",\"amount\":50000,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Requires a manually prepared IdempotencyRecords row with Status Failed and matching RequestHash. Current implementation returns 200 with Status Failed and does not retry; observe and document this explicitly. Desired production behavior should be a defined retry or terminal failure policy." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Current implementation returns 200 for non-Processing state', function () { pm.response.to.have.status(200); });", "pm.test('Response identifies Failed state', function () { pm.expect(pm.response.text()).to.contain('Failed'); });"] } }] }
+      ]
+    },
+    {
+      "name": "5. Database Uniqueness / Race Condition",
+      "description": "Postman does not make a normal collection run concurrent. Open request 13 in two tabs and click Send at the same time, or use Collection Runner with 3 iterations only if your runner/version supports parallel runs. For a deterministic load, use Newman or a small Task.WhenAll client. Verify exactly one wire and one IdempotencyRecord for the key. The current controller can expose a 500 on a unique-key race because it does not catch DbUpdateException; that is a useful interview finding to fix.",
+      "item": [
+        { "name": "13. Concurrent duplicate template", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "{{concurrentKey}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"toAccount\":\"ACC002\",\"amount\":50000,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Send this exact request twice concurrently. Expected: one 200 and one 200/409, never two wires. SQL Server unique index on IdempotencyRecords.Key must allow only one record." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Concurrency result is success or conflict', function () { pm.expect([200, 409]).to.include(pm.response.code); });", "if (pm.response.code === 200) { const body = pm.response.json(); pm.collectionVariables.set('lastWireId', String(body.WireRequestId || body.wireRequestId)); }"] } }] },
+        { "name": "14. Three or more simultaneous requests", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "CONCURRENT-003" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"toAccount\":\"ACC002\",\"amount\":50000,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Send 3+ copies simultaneously using the same key and body. Expected exactly one wire. Run by duplicating this request into separate tabs or with Newman/client parallelism." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Response is not a successful duplicate creation signal', function () { pm.expect([200, 409]).to.include(pm.response.code); });"] } }] },
+        { "name": "15. Concurrent same key, different payload A", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "CONCURRENT-DIFFERENT" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"toAccount\":\"ACC002\",\"amount\":50000,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Send concurrently with request 15B. Exactly one logical request may win; the other must be 409 (or a documented race-safe result), and only one wire may exist." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Expected success or conflict', function () { pm.expect([200, 409]).to.include(pm.response.code); });"] } }] },
+        { "name": "15B. Concurrent same key, different payload B", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "CONCURRENT-DIFFERENT" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"toAccount\":\"ACC002\",\"amount\":90000,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Run concurrently with request 15A. RequestHash protects against two amounts using one key. Verify one IdempotencyRecord and at most one wire." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Expected success or conflict', function () { pm.expect([200, 409]).to.include(pm.response.code); });"] } }] }
+      ]
+    },
+    {
+      "name": "6. Failure Scenarios",
+      "description": "The current API has no development-only failure flag and completes synchronously. These are preparation notes, not executable invented endpoints. Add a Development-only hook or injectable processor before running them.",
+      "item": [
+        { "name": "16. Failure after idempotency record creation", "description": "REQUIRES IMPLEMENTATION. Suggested development-only mechanism: a config flag or injected test processor that throws after the first SaveChangesAsync and before completion. Do not expose this in production. Prepare a Processing row, call POST, expect a non-Completed state, then retry and verify the recovery policy. SQL Server: the record must not claim Completed when the wire was not completed." },
+        { "name": "17. Failure after wire creation before HTTP response", "description": "REQUIRES IMPLEMENTATION. Suggested development-only mechanism: throw after both entities are completed but immediately before returning HTTP response. Retry the same key and expect the existing WireRequestId, never a second wire. This models a client timeout after commit." }
+      ]
+    },
+    {
+      "name": "7. Financial Transaction Scenarios",
+      "description": "The current DTO has no validation attributes, so these expected 400/422 tests are likely to fail by creating Completed wires. That failure is intentional evidence for the interview exercise: add validation before treating these as production-safe.",
+      "item": [
+        { "name": "18. Zero amount", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "VALIDATION-ZERO" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"toAccount\":\"ACC002\",\"amount\":0,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Expected 400 or 422 and no wire. Zero-value transfers should be rejected before persistence." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Invalid amount is rejected', function () { pm.expect([400, 422]).to.include(pm.response.code); });", "pm.test('No wire ID is returned', function () { pm.expect(pm.response.text()).to.not.match(/WireRequestId|wireRequestId/); });"] } }] },
+        { "name": "19. Negative amount", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "VALIDATION-NEGATIVE" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"toAccount\":\"ACC002\",\"amount\":-1,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Expected 400 or 422 and no wire. Negative money must never enter the transaction ledger." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Invalid amount is rejected', function () { pm.expect([400, 422]).to.include(pm.response.code); });"] } }] },
+        { "name": "20. Missing fromAccount", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "VALIDATION-NO-FROM" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"toAccount\":\"ACC002\",\"amount\":50000,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Expected 400 or 422 and no wire. Sender account is mandatory for auditability and settlement." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Missing sender is rejected', function () { pm.expect([400, 422]).to.include(pm.response.code); });"] } }] },
+        { "name": "21. Missing toAccount", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "VALIDATION-NO-TO" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"amount\":50000,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Expected 400 or 422 and no wire. Recipient account is mandatory." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Missing recipient is rejected', function () { pm.expect([400, 422]).to.include(pm.response.code); });"] } }] },
+        { "name": "22. Same source and destination", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "VALIDATION-SAME-ACCOUNT" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"toAccount\":\"ACC001\",\"amount\":50000,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Expected 400 or 422 and no wire. Self-transfers should be explicitly governed by business rules." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Self-transfer policy is enforced', function () { pm.expect([400, 422]).to.include(pm.response.code); });"] } }] },
+        { "name": "23. Invalid currency", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "VALIDATION-CURRENCY" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"toAccount\":\"ACC002\",\"amount\":50000,\"currency\":\"XXX\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Expected 400 or 422 and no wire. Currency should be restricted to supported ISO codes." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Currency policy is enforced', function () { pm.expect([400, 422]).to.include(pm.response.code); });"] } }] },
+        { "name": "24. Very large amount", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "VALIDATION-LARGE" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"toAccount\":\"ACC002\",\"amount\":999999999999999999,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Expected 400 or 422 and no wire, unless this limit is explicitly supported. Large-value transfers require limits and additional controls." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Amount limit is enforced', function () { pm.expect([400, 422]).to.include(pm.response.code); });"] } }] },
+        { "name": "25. Decimal amount", "request": { "method": "POST", "header": [{ "key": "Idempotency-Key", "value": "VALIDATION-DECIMAL" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"fromAccount\":\"ACC001\",\"toAccount\":\"ACC002\",\"amount\":50000.75,\"currency\":\"USD\"}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/wires", "description": "Expected 200 only if the domain supports cents; otherwise 400/422. Verify decimal precision is preserved in SQL Server." }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Decimal policy returns an intentional status', function () { pm.expect([200, 400, 422]).to.include(pm.response.code); });", "if (pm.response.code >= 400) pm.test('Rejected response has no wire ID', function () { pm.expect(pm.response.text()).to.not.match(/WireRequestId|wireRequestId/); });"] } }] }
+      ]
+    },
+    {
+      "name": "8. Approval Workflow",
+      "description": "REQUIRES IMPLEMENTATION. The current API has no approval, rejection, or GET endpoint, so no executable URLs are invented here. Suggested endpoints: POST /api/wires/{id}/approve, POST /api/wires/{id}/reject, GET /api/wires/{id}. Add optimistic concurrency using a rowversion/ETag or equivalent before running these scenarios.",
+      "item": [
+        { "name": "26. Approve valid Submitted wire", "description": "REQUIRES IMPLEMENTATION. Suggested endpoint: POST /api/wires/{{approvalWireId}}/approve. Expected 200 and one transition Submitted -> Approved." },
+        { "name": "27. Approve same wire twice", "description": "REQUIRES IMPLEMENTATION. Expected second request to be rejected, not a second approval event." },
+        { "name": "28. Two users approve concurrently", "description": "REQUIRES IMPLEMENTATION. Send two approve requests simultaneously. Exactly one should transition the row; the other should receive a conflict based on concurrency control." },
+        { "name": "29. Approve Completed wire", "description": "REQUIRES IMPLEMENTATION. Expected invalid state transition response, typically 409 Conflict." },
+        { "name": "30. Approve Rejected wire", "description": "REQUIRES IMPLEMENTATION. Expected invalid state transition response, typically 409 Conflict." },
+        { "name": "31. Reject Approved wire", "description": "REQUIRES IMPLEMENTATION. Expected invalid state transition response, typically 409 Conflict." }
+      ]
+    },
+    {
+      "name": "9. GET / Verification",
+      "description": "REQUIRES IMPLEMENTATION. The current API exposes no GET endpoint. Suggested endpoint: GET /api/wires/{id}. These checks should verify the wire status, the single wire per idempotency key, and the IdempotencyRecord relationship. Consider a separate admin-only endpoint for idempotency records rather than exposing internal hashes publicly.",
+      "item": [
+        { "name": "32. GET created wire by ID", "description": "REQUIRES IMPLEMENTATION. Suggested request: GET {{baseUrl}}/api/wires/{{firstWireId}}. Expected 200." },
+        { "name": "33. Verify status", "description": "REQUIRES IMPLEMENTATION. Assert the returned wire status is Completed for firstWireId." },
+        { "name": "34. Verify one wire per idempotency key", "description": "DATABASE CHECK. Query IdempotencyRecords by Key = TEST-001 and join to WireRequests. Expected one record and one linked wire." },
+        { "name": "35. Verify idempotency record relationship", "description": "DATABASE CHECK. Verify WireRequestId is populated, RequestHash is stable across retries, and CreatedAt/CompletedAt are populated in the expected order." }
+      ]
+    },
+    {
+      "name": "10. Postman Test Scripts",
+      "description": "The executable requests include status, response ID, status, response-time, and idempotency assertions where applicable. Collection variables firstWireId, test002WireId, test003WireId, and test004WireId are populated by their first requests. Run the Basic Idempotency folder in order before retry assertions.",
+      "item": [
+        { "name": "Script reference - capture and compare WireRequestId", "description": "Capture: const body = pm.response.json(); pm.collectionVariables.set('firstWireId', String(body.WireRequestId || body.wireRequestId)); Compare retries with pm.expect(String(body.WireRequestId || body.wireRequestId)).to.eql(pm.collectionVariables.get('firstWireId'))." },
+        { "name": "Script reference - reject invalid writes", "description": "For validation requests assert 400/422 and assert the response does not contain WireRequestId. Follow with SQL verification because an HTTP rejection alone does not prove no row was written." },
+        { "name": "Script reference - concurrency result", "description": "For parallel calls accept only 200 or 409 while SQL Server is the source of truth for exactly one IdempotencyRecord and one WireRequest. A 500 during a race is a defect to fix, not a passing result." }
+      ]
+    },
+    {
+      "name": "11. Database Verification Notes",
+      "description": "Run these queries in SQL Server Management Studio against IdempotencyDb. Replace literals as needed. Never expose RequestHash or internal idempotency records through an unauthenticated public API.",
+      "item": [
+        { "name": "SQL - inspect wires", "description": "SELECT * FROM WireRequests ORDER BY Id DESC;\n\nVerify: one row per successful logical operation, correct accounts/amount/currency, Completed status, and CompletedAt populated." },
+        { "name": "SQL - inspect idempotency records", "description": "SELECT * FROM IdempotencyRecords ORDER BY Id DESC;\n\nVerify: Key is unique, RequestHash is stable for exact retries, Status transitions correctly, Response is stored only after completion, and timestamps are populated." },
+        { "name": "SQL - verify one key and relationship", "description": "SELECT i.Key, i.RequestHash, i.Status AS IdempotencyStatus, i.WireRequestId, w.Id AS WireId, w.Status AS WireStatus, w.Amount\nFROM IdempotencyRecords i\nLEFT JOIN WireRequests w ON w.Id = i.WireRequestId\nWHERE i.Key = 'TEST-001';\n\nExpected: one idempotency row, one matching wire, and WireRequestId = WireId." },
+        { "name": "SQL - find duplicate keys", "description": "SELECT [Key], COUNT(*) AS RecordCount\nFROM IdempotencyRecords\nGROUP BY [Key]\nHAVING COUNT(*) > 1;\n\nExpected: zero rows. The unique index is the database backstop for race conditions." },
+        { "name": "SQL - find duplicate logical wires", "description": "SELECT i.[Key], COUNT(w.Id) AS LinkedWireCount\nFROM IdempotencyRecords i\nLEFT JOIN WireRequests w ON w.Id = i.WireRequestId\nGROUP BY i.[Key]\nHAVING COUNT(w.Id) > 1;\n\nExpected: zero rows. Also inspect concurrent test keys directly." },
+        { "name": "SQL - prepare Processing test record", "description": "Preparation only. Compute the same SHA-256 hash used by the API for the exact JSON serialization, then insert a row such as:\nINSERT INTO IdempotencyRecords ([Key], RequestHash, [Status], CreatedAt) VALUES ('PROCESSING-001', '<matching-uppercase-sha256>', 'Processing', SYSUTCDATETIME());\nDo not insert a fake hash or the API will correctly treat the request as a different payload." },
+        { "name": "SQL - prepare Failed test record", "description": "Preparation only. Insert a matching RequestHash with [Status] = 'Failed' and observe request 12. The current controller treats Failed as completed and returns it; define and implement the desired retry policy before relying on this behavior." }
+      ]
+    }
+  ]
+}

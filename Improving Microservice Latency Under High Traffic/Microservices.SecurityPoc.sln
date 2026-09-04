@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderService", "OrderService\OrderService.csproj", "{FA37A7FE-54EA-47F5-82A8-A5E528113CAF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaymentService", "PaymentService\PaymentService.csproj", "{CC2B64C7-873D-45FB-B122-56100A22E323}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductService", "ProductService\ProductService.csproj", "{F18219D2-02EF-4821-888B-CA3A5910378F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FA37A7FE-54EA-47F5-82A8-A5E528113CAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA37A7FE-54EA-47F5-82A8-A5E528113CAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA37A7FE-54EA-47F5-82A8-A5E528113CAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA37A7FE-54EA-47F5-82A8-A5E528113CAF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC2B64C7-873D-45FB-B122-56100A22E323}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC2B64C7-873D-45FB-B122-56100A22E323}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC2B64C7-873D-45FB-B122-56100A22E323}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC2B64C7-873D-45FB-B122-56100A22E323}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F18219D2-02EF-4821-888B-CA3A5910378F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F18219D2-02EF-4821-888B-CA3A5910378F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F18219D2-02EF-4821-888B-CA3A5910378F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F18219D2-02EF-4821-888B-CA3A5910378F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
