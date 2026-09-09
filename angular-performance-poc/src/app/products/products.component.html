@@ -1,0 +1,27 @@
+<h1>Products</h1>
+
+@if (loading) {
+  <p>Loading...</p>
+}
+
+<div class="products">
+
+  @for (product of products; track product.id) {
+
+    <div class="product">
+
+      <img
+        [src]="product.thumbnail"
+        width="150"
+        height="150"
+      >
+
+      <h3>{{ product.title }}</h3>
+
+      <p>Price: ${{ product.price }}</p>
+
+    </div>
+
+  }
+
+</div>
