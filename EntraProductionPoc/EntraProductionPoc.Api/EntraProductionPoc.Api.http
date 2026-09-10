@@ -1,0 +1,6 @@
+@EntraProductionPoc.Api_HostAddress = http://localhost:5063
+
+GET {{EntraProductionPoc.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
