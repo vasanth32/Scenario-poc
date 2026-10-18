@@ -1,0 +1,130 @@
+@host = http://localhost:5101
+
+### 200 - existing claim
+GET {{host}}/api/claims/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+Accept: application/json
+
+### 404 - well-formed id that does not exist
+GET {{host}}/api/claims/99999999-9999-9999-9999-999999999999
+
+### 400 - id is not a GUID
+GET {{host}}/api/claims/not-a-guid
+
+### 400 - empty GUID
+GET {{host}}/api/claims/00000000-0000-0000-0000-000000000000
+
+### 201 - create claim
+POST {{host}}/api/claims
+Content-Type: application/json
+
+{
+  "policyId": "11111111-1111-1111-1111-111111111111",
+  "description": "Water damage in kitchen",
+  "amount": 1500.50
+}
+
+### 422 - policy does not exist (requires Policy.Api running)
+POST {{host}}/api/claims
+Content-Type: application/json
+
+{
+  "policyId": "99999999-9999-9999-9999-999999999999",
+  "description": "Unknown policy",
+  "amount": 100
+}
+
+### 422 - policy exists but is inactive (requires Policy.Api running)
+POST {{host}}/api/claims
+Content-Type: application/json
+
+{
+  "policyId": "22222222-2222-2222-2222-222222222222",
+  "description": "Inactive policy",
+  "amount": 100
+}
+
+### 400 - empty description and non-positive amount
+POST {{host}}/api/claims
+Content-Type: application/json
+
+{
+  "policyId": "11111111-1111-1111-1111-111111111111",
+  "description": "   ",
+  "amount": 0
+}
+
+### 400 - empty policyId
+POST {{host}}/api/claims
+Content-Type: application/json
+
+{
+  "policyId": "00000000-0000-0000-0000-000000000000",
+  "description": "Valid description",
+  "amount": 100
+}
+
+### 400 - amount too large
+POST {{host}}/api/claims
+Content-Type: application/json
+
+{
+  "policyId": "11111111-1111-1111-1111-111111111111",
+  "description": "Huge claim",
+  "amount": 5000000000
+}
+
+### 400 - malformed policyId
+POST {{host}}/api/claims
+Content-Type: application/json
+
+{
+  "policyId": "abc",
+  "description": "Bad id",
+  "amount": 10
+}
+
+### 400 - missing body
+POST {{host}}/api/claims
+Content-Type: application/json
+
+### 200 - list claims (paged)
+GET {{host}}/api/claims?page=1&pageSize=10
+
+### 400 - invalid paging
+GET {{host}}/api/claims?page=0&pageSize=1000
+
+### 200 - update claim
+PUT {{host}}/api/claims/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+Content-Type: application/json
+
+{
+  "description": "Updated description",
+  "amount": 2000,
+  "status": "Approved"
+}
+
+### 400 - invalid status value
+PUT {{host}}/api/claims/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+Content-Type: application/json
+
+{
+  "description": "x",
+  "amount": 10,
+  "status": "Bogus"
+}
+
+### 404 - update unknown claim
+PUT {{host}}/api/claims/99999999-9999-9999-9999-999999999999
+Content-Type: application/json
+
+{
+  "description": "x",
+  "amount": 10,
+  "status": "Approved"
+}
+
+### 204 - delete claim (replace id with a created claim)
+DELETE {{host}}/api/claims/99999999-9999-9999-9999-999999999999
+
+### 400 - delete with bad id
+DELETE {{host}}/api/claims/not-a-guid

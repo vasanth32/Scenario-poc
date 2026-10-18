@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Claims.Api.Tests/Claims.Api.Tests.csproj" />
+  <Project Path="Claims.Api/Claims.Api.csproj" />
+  <Project Path="Policy.Api/Policy.Api.csproj" />
+</Solution>
