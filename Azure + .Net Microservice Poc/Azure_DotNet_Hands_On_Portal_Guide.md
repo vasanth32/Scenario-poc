@@ -133,8 +133,6 @@ Step 3 of 3: Add configuration, authentication, fallback, and tests.
 Read the Service Bus namespace from configuration key ServiceBus:FullyQualifiedNamespace. Authenticate with DefaultAzureCredential. When the setting is missing or empty, use the existing in-memory publisher and do not start the Azure Service Bus consumer. When it is present, register one singleton ServiceBusClient, the Azure publisher, and the consumer. Add focused xUnit tests using fake handlers or test doubles for publisher serialization, stable MessageId, successful completion, failed-message abandon, cancellation, and fallback to the in-memory implementation. Do not use connection strings or hardcoded secrets. Target net10.0.
 ```
 
-> **>>> CONTINUE FROM HERE <<<** (POC 7 code and tests are complete; next create the Azure queue)
-
 ### Portal steps
 
 1. Resource group `rg-poc07-servicebus`.
@@ -144,6 +142,8 @@ Read the Service Bus namespace from configuration key ServiceBus:FullyQualifiedN
 5. Set `ServiceBus__FullyQualifiedNamespace` = `<name>.servicebus.windows.net`; run the API and Payments consumer.
 6. Observe: queue **Overview** shows active/dead-letter message counts. Use **Service Bus Explorer** (queue > Service Bus Explorer) to peek messages and view the **Dead-letter** subqueue after forced failures.
 7. Topics (Standard only): create topic `claim-events` and subscriptions `payments-sub`, `audit-sub` to see fan-out.
+
+> **>>> CONTINUE FROM HERE <<<** (Service Bus namespace and queue are created; next test the functionality)
 
 ### Test the functionality
 
