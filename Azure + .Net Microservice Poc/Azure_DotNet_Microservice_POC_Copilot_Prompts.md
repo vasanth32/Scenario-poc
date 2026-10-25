@@ -171,7 +171,6 @@ Review my resilience configuration for retry storms and non-idempotent retries. 
 Explain OAuth 2.0, OpenID Connect, JWT structure (header, payload, signature), access vs refresh tokens, and authentication vs authorization. Explain where Microsoft Entra ID fits.
 ```
 
-Continue from here
 **P2 Build**
 
 ```
@@ -194,6 +193,7 @@ Review my JWT validation settings (issuer, audience, lifetime, clock skew, key h
 
 ### POC 6: Azure Key Vault and Managed Identity
 
+Continue from here
 **P1 Learn**
 
 ```

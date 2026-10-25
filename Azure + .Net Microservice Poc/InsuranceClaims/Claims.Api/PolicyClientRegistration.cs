@@ -1,12 +1,16 @@
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using Polly;
+using Claims.Api.Authentication;
 
 public static class PolicyClientRegistration
 {
     // Typed client + options + resilience pipeline. Returns the builder so tests can swap the primary handler.
     public static IHttpClientBuilder AddPolicyClient(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddHttpContextAccessor();
+        services.AddTransient<BearerTokenForwardingHandler>();
+
         services.AddOptions<PolicyApiOptions>()
             .Bind(configuration.GetSection(PolicyApiOptions.SectionName))
             .ValidateDataAnnotations()
@@ -19,6 +23,8 @@ public static class PolicyClientRegistration
                 // Backstop only: the resilience pipeline enforces the real total and per-attempt timeouts.
                 client.Timeout = TimeSpan.FromSeconds(options.Resilience.TotalTimeoutSeconds + 5);
             });
+
+        builder.AddHttpMessageHandler<BearerTokenForwardingHandler>();
 
         builder.AddResilienceHandler("policy-api", (pipeline, context) =>
             {

@@ -1,4 +1,5 @@
 using System.Net;
+using Claims.Api.Messaging;
 using Claims.Api.Models;
 using Claims.Api.Services;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -15,7 +16,10 @@ public class ClaimServiceTests
     {
         var http = new HttpClient(handler) { BaseAddress = new Uri("http://policy.test/") };
         var repo = new FakeClaimRepository();
-        return (new ClaimService(repo, new PolicyClient(http, NullLogger<PolicyClient>.Instance)), repo);
+        return (new ClaimService(
+            repo,
+            new PolicyClient(http, NullLogger<PolicyClient>.Instance),
+            new InMemoryEventPublisher()), repo);
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 using Claims.Api.Models;
+using Claims.Api.Messaging;
 using Claims.Api.Repositories;
 
 namespace Claims.Api.Services;
@@ -17,10 +18,14 @@ public interface IClaimService
     Task<ClaimDto?> GetByIdAsync(Guid id, CancellationToken ct);
     Task<CreateClaimResult> CreateAsync(CreateClaimRequest request, CancellationToken ct);
     Task<ClaimDto?> UpdateAsync(Guid id, UpdateClaimRequest request, CancellationToken ct);
+    Task<ClaimDto?> ApproveAsync(Guid id, CancellationToken ct);
     Task<bool> DeleteAsync(Guid id, CancellationToken ct);
 }
 
-public sealed class ClaimService(IClaimRepository repository, IPolicyClient policies) : IClaimService
+public sealed class ClaimService(
+    IClaimRepository repository,
+    IPolicyClient policies,
+    IEventPublisher eventPublisher) : IClaimService
 {
     public async Task<IReadOnlyList<ClaimDto>> ListAsync(int page, int pageSize, CancellationToken ct) =>
         (await repository.ListAsync((page - 1) * pageSize, pageSize, ct)).Select(ClaimDto.From).ToList();
@@ -53,6 +58,8 @@ public sealed class ClaimService(IClaimRepository repository, IPolicyClient poli
             Notes = request.Notes?.Trim()
         };
         await repository.AddAsync(claim, ct);
+        await eventPublisher.PublishAsync(
+            new ClaimSubmitted(Guid.NewGuid(), claim.Id, claim.PolicyId, claim.CreatedAtUtc), ct);
         return CreateClaimResult.Success(ClaimDto.From(claim));
     }
 
@@ -67,6 +74,15 @@ public sealed class ClaimService(IClaimRepository repository, IPolicyClient poli
         claim.Status = request.Status;
         claim.Notes = request.Notes?.Trim();
 
+        return await repository.UpdateAsync(claim, ct) ? ClaimDto.From(claim) : null;
+    }
+
+    public async Task<ClaimDto?> ApproveAsync(Guid id, CancellationToken ct)
+    {
+        var claim = await repository.GetByIdAsync(id, ct);
+        if (claim is null) return null;
+
+        claim.Status = ClaimStatus.Approved;
         return await repository.UpdateAsync(claim, ct) ? ClaimDto.From(claim) : null;
     }
 

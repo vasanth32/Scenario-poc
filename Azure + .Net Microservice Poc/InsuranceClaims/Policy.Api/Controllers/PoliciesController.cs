@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Policy.Api.Authentication;
 using Policy.Api.Models;
 using Policy.Api.Services;
 using Policy.Api.Validation;
@@ -31,6 +33,7 @@ public class PoliciesController(IPolicyService policyService) : ControllerBase
     }
 
     [HttpPost(Name = "CreatePolicy")]
+    [Authorize(Policy = AuthorizationPolicies.AdjusterOnly)]
     [ProducesResponseType<PolicyDto>(StatusCodes.Status201Created)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
@@ -43,6 +46,7 @@ public class PoliciesController(IPolicyService policyService) : ControllerBase
     }
 
     [HttpPut("{id}", Name = "UpdatePolicy")]
+    [Authorize(Policy = AuthorizationPolicies.AdjusterOnly)]
     [ProducesResponseType<PolicyDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -54,6 +58,7 @@ public class PoliciesController(IPolicyService policyService) : ControllerBase
     }
 
     [HttpDelete("{id}", Name = "DeletePolicy")]
+    [Authorize(Policy = AuthorizationPolicies.AdjusterOnly)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]

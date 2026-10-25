@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using Claims.Api.Authentication;
 using Claims.Api.Models;
 using Claims.Api.Services;
 using Claims.Api.Validation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Claims.Api.Controllers;
@@ -31,6 +33,7 @@ public class ClaimsController(IClaimService claimService) : ControllerBase
     }
 
     [HttpPost(Name = "CreateClaim")]
+    [Authorize(Policy = AuthorizationPolicies.CustomerOnly)]
     [ProducesResponseType<ClaimDto>(StatusCodes.Status201Created)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status422UnprocessableEntity)]
@@ -52,6 +55,7 @@ public class ClaimsController(IClaimService claimService) : ControllerBase
     }
 
     [HttpPut("{id}", Name = "UpdateClaim")]
+    [Authorize(Policy = AuthorizationPolicies.AdjusterOnly)]
     [ProducesResponseType<ClaimDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -61,7 +65,19 @@ public class ClaimsController(IClaimService claimService) : ControllerBase
         return claim is null ? ClaimNotFound(id) : claim;
     }
 
+    [HttpPatch("{id}/approve", Name = "ApproveClaim")]
+    [Authorize(Policy = AuthorizationPolicies.AdjusterOnly)]
+    [ProducesResponseType<ClaimDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ClaimDto>> Approve([NotEmptyGuid] Guid id, CancellationToken ct)
+    {
+        var claim = await claimService.ApproveAsync(id, ct);
+        return claim is null ? ClaimNotFound(id) : claim;
+    }
+
     [HttpDelete("{id}", Name = "DeleteClaim")]
+    [Authorize(Policy = AuthorizationPolicies.AdjusterOnly)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
