@@ -1,5 +1,8 @@
 using Azure.Identity;
+using Azure.Monitor.OpenTelemetry.AspNetCore;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
 using Policy.Api.Authentication;
 using Policy.Api.Chaos;
 using Policy.Api.Data;
@@ -15,6 +18,18 @@ if (!string.IsNullOrWhiteSpace(keyVaultUriValue))
         throw new InvalidOperationException("Configuration value 'KeyVault:Uri' must be an absolute URI.");
 
     builder.Configuration.AddAzureKeyVault(keyVaultUri, new DefaultAzureCredential());
+}
+
+if (!string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
+{
+    builder.Services.AddOpenTelemetry().UseAzureMonitor();
+}
+else
+{
+    builder.Services.AddOpenTelemetry().WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddConsoleExporter());
 }
 
 builder.Services.AddControllers();

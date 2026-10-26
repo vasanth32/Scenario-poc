@@ -61,7 +61,7 @@ POCs 1-5 and 7-9, 11-13, 15-17 are local-first. Azure is optional; use it only w
 
 Suggested Azure order: **6 -> 7 -> 11 -> 12 (ACR) -> 14**.
 
-**Progress:** POCs 1-5 are done locally, POC 6 Key Vault configuration is complete, and Azure POC 7 Steps 1-3 are implemented and tested. **Continue with the Azure POC 7 Portal steps below.**
+**Progress:** POCs 1-5 are done locally, POC 6 Key Vault configuration is complete, Azure POC 7 (Service Bus) and POC 11 (Application Insights) are done. **Continue with Azure POC 12 (Container Registry) below.**
 
 ---
 
@@ -143,8 +143,6 @@ Read the Service Bus namespace from configuration key ServiceBus:FullyQualifiedN
 6. Observe: queue **Overview** shows active/dead-letter message counts. Use **Service Bus Explorer** (queue > Service Bus Explorer) to peek messages and view the **Dead-letter** subqueue after forced failures.
 7. Topics (Standard only): create topic `claim-events` and subscriptions `payments-sub`, `audit-sub` to see fan-out.
 
-> **>>> CONTINUE FROM HERE <<<** (Service Bus namespace and queue are created; next test the functionality)
-
 ### Test the functionality
 
 1. Set `ServiceBus__FullyQualifiedNamespace` to the namespace host name and start Claims.Api.
@@ -194,6 +192,8 @@ Delete resource group `rg-poc11-monitor` (removes workspace and App Insights).
 ---
 
 ## Azure POC 12: Container Registry
+
+> **>>> CONTINUE FROM HERE <<<**
 
 ### Copilot prompt (code)
 

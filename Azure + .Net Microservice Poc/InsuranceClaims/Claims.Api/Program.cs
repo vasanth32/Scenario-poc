@@ -1,5 +1,8 @@
 using System.Text.Json.Serialization;
 using Azure.Identity;
+using Azure.Monitor.OpenTelemetry.AspNetCore;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
 using Claims.Api.Authentication;
 using Claims.Api.Data;
 using Claims.Api.Messaging;
@@ -16,6 +19,19 @@ if (!string.IsNullOrWhiteSpace(keyVaultUriValue))
         throw new InvalidOperationException("Configuration value 'KeyVault:Uri' must be an absolute URI.");
 
     builder.Configuration.AddAzureKeyVault(keyVaultUri, new DefaultAzureCredential());
+}
+
+// W3C trace context (traceparent) is propagated by the HttpClient instrumentation.
+if (!string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
+{
+    builder.Services.AddOpenTelemetry().UseAzureMonitor();
+}
+else
+{
+    builder.Services.AddOpenTelemetry().WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddConsoleExporter());
 }
 
 builder.Services.AddControllers()
