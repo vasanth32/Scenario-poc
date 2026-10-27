@@ -195,25 +195,100 @@ Delete resource group `rg-poc11-monitor` (removes workspace and App Insights).
 
 > **>>> CONTINUE FROM HERE <<<**
 
-### Copilot prompt (code)
+### What this POC teaches
+
+An **image** is a packaged version of an application. A **Dockerfile** is the recipe used to build that image. Azure Container Registry (ACR) is a private Azure storage location for Docker images.
+
+The flow is:
+
+```text
+.NET project -> Dockerfile -> Docker image -> Azure Container Registry
+```
+
+ACR does not create the Dockerfile and does not build the application code. We create the Dockerfiles first, build the images locally, and then push the images to ACR.
+
+### Step 1: Create Dockerfiles with Copilot
+
+#### Copilot prompt (code)
 
 ```
-Show the docker build, tag, and push commands for Claims.Api and Policy.Api images to an Azure Container Registry using `az acr login`. Do not change application code.
+Create Dockerfiles only; do not modify application source code, project files, or configuration.
+
+Create these files:
+- InsuranceClaims/Claims.Api/Dockerfile
+- InsuranceClaims/Policy.Api/Dockerfile
+
+Use multi-stage Docker builds targeting net10.0. Use `mcr.microsoft.com/dotnet/sdk:10.0` for the build and publish stages and `mcr.microsoft.com/dotnet/aspnet:10.0` for the runtime stages. Build from the repository root so each Dockerfile can copy its project files correctly. Restore, build, and publish the correct API project. Run the final container as a non-root user where supported, expose port 8080, and set ASPNETCORE_URLS to http://+:8080. Keep the images small and do not put secrets in them.
 ```
 
-### Portal steps
+After accepting the prompt, verify that both Dockerfiles exist and review the generated `COPY`, `dotnet restore`, `dotnet publish`, port, and user settings.
 
-1. Resource group `rg-poc12-acr`.
-2. Create **Container Registry**: SKU **Basic**, unique name.
-3. Leave Admin user **disabled** (use `az acr login --name <acr>` with your identity; you need **AcrPush** role on the registry).
-4. Push images, then Registry > **Repositories** to confirm.
+### Step 2: Create the Azure Container Registry manually
+
+1. Portal > **Resource groups** > **Create** > name `rg-poc12-acr`.
+2. Create **Container Registry**.
+3. Registry name: globally unique, lowercase letters and numbers only, for example `acrpoc12vasanth123`.
+4. Pricing plan: **Basic**.
+5. Disable **Admin user**.
+6. Select **Review + create** > **Create**.
+7. Open the registry > **Access control (IAM)** > add the **AcrPush** role to your Azure user.
+
+The registry stores images. It does not store your source code or application secrets.
+
+### Step 3: Build, tag, and push the images
+
+Open PowerShell at the repository root:
+
+```powershell
+cd "D:\PracticeProjects\Scenario-poc\Azure + .Net Microservice Poc"
+
+$acrName = "<your-acr-name>"
+$loginServer = az acr show --name $acrName --query loginServer --output tsv
+
+az acr login --name $acrName
+```
+
+Build the local Docker images:
+
+```powershell
+docker build --file ".\InsuranceClaims\Claims.Api\Dockerfile" --tag "claims-api:local" .
+docker build --file ".\InsuranceClaims\Policy.Api\Dockerfile" --tag "policy-api:local" .
+```
+
+Tag the images with the ACR address:
+
+```powershell
+docker tag claims-api:local "$loginServer/claims-api:latest"
+docker tag policy-api:local "$loginServer/policy-api:latest"
+```
+
+Push the images to ACR:
+
+```powershell
+docker push "$loginServer/claims-api:latest"
+docker push "$loginServer/policy-api:latest"
+```
+
+Useful checks:
+
+```powershell
+az acr repository list --name $acrName --output table
+az acr repository show-tags --name $acrName --repository claims-api --output table
+az acr repository show-tags --name $acrName --repository policy-api --output table
+```
 
 ### Test the functionality
 
-1. Open ACR > **Repositories** and select the pushed Claims.Api repository.
-2. Confirm the expected image tag and digest are listed.
-3. Pull the image locally with `docker pull <acr-name>.azurecr.io/claims-api:<tag>`.
-4. Expected result: the image downloads successfully using your Azure identity.
+1. Portal > ACR > **Repositories**.
+2. Confirm `claims-api` and `policy-api` repositories exist.
+3. Confirm each repository contains the `latest` tag and an image digest.
+4. Pull the images locally:
+   ```powershell
+   docker pull "$loginServer/claims-api:latest"
+   docker pull "$loginServer/policy-api:latest"
+   ```
+5. Expected result: both images download successfully using your Azure identity.
+6. Do not expect the APIs to run correctly in a container yet if they still require local SQL Server or local configuration. Container runtime configuration is covered in POC 14.
 
 ### Cleanup
 
