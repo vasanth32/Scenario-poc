@@ -193,8 +193,6 @@ Delete resource group `rg-poc11-monitor` (removes workspace and App Insights).
 
 ## Azure POC 12: Container Registry
 
-> **>>> CONTINUE FROM HERE <<<**
-
 ### What this POC teaches
 
 An **image** is a packaged version of an application. A **Dockerfile** is the recipe used to build that image. Azure Container Registry (ACR) is a private Azure storage location for Docker images.
@@ -247,6 +245,8 @@ $loginServer = az acr show --name $acrName --query loginServer --output tsv
 
 az acr login --name $acrName
 ```
+
+> **>>> CONTINUE FROM HERE <<<**
 
 Build the local Docker images:
 
