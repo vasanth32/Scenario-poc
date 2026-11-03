@@ -304,7 +304,7 @@ Delete resource group `rg-poc12-acr`.
 Create a deployment architecture doc with a Mermaid diagram and Bicep templates for Azure Container Apps, Service Bus, Key Vault, and Application Insights. Do not deploy. Use user-assigned managed identity and RBAC role assignments; keep all SKUs at the lowest cost tier.
 ```
 
-### Portal steps (manual deployment)
+### Portal steps (manual depl oyment)
 
 1. Resource group `rg-poc14-aca`.
 2. Create ACR (as in POC 12) and push images.
@@ -405,3 +405,110 @@ az resource list --query "[].{name:name,type:type,rg:resourceGroup}" -o table
 ```
 
 Portal: **All resources** (filter subscription) should be empty when finished.
+
+-------------------------------------
+
+Phase 1 – Complete cloud deployment
+Current priority
+Topic	Practical learning
+Azure SQL	Migrate PolicyDb and configure secure connectivity
+Container Apps	Deploy Claims.Api and Policy.Api
+Internal communication	Claims.Api → Policy.Api
+Managed Identity	Access Azure resources without passwords
+Key Vault	Centralise application secrets
+
+Phase 2 – Advanced microservices
+High priority
+
+
+
+
+
+
+
+
+
+1. Event-driven architecture
+- Azure Service Bus Topics and Subscriptions
+- Publisher / Consumer
+- Dead-letter queues
+- Retry and duplicate detection
+
+
+
+
+
+
+
+
+
+
+
+
+2. Transactional Outbox Pattern
+- Database transaction + event publishing
+- Background worker
+- Idempotency
+- Exactly-once processing limitations
+
+
+
+
+
+
+
+
+
+
+
+
+3. Distributed transactions
+- Saga pattern
+- Choreography vs orchestration
+- Compensating transactions
+- Eventual consistency
+
+
+
+
+
+
+
+
+
+
+
+
+4. Resilience engineering
+- Retry and exponential backoff
+- Circuit breaker
+- Timeout
+- Bulkhead
+- Fallback
+
+
+
+Phase 3 – Production monitoring and security
+Topic	What you'll learn
+OpenTelemetry	Distributed tracing
+Application Insights	Requests, dependencies and exceptions
+Log Analytics	KQL queries and dashboards
+Azure API Management	Gateway, JWT validation, rate limiting
+Entra ID	OAuth2, client credentials and managed identity
+Key Vault	Secret rotation and access policies
+
+Phase 4 – DevOps and cloud infrastructure
+- GitHub Actions – complete CI/CD pipeline.
+- Docker – image optimisation and multi-stage builds.
+- Azure Container Apps – revisions, scaling and deployment strategies.
+- Bicep / Terraform – Infrastructure as Code.
+- Azure Kubernetes Service (AKS) – Kubernetes deployments, Helm and ingress.
+- Production troubleshooting and cost optimisation.
+Phase 5 – Senior .NET interview preparation
+Focus on these topics alongside practical implementation:
+1. Advanced C# and asynchronous programming.
+2. ASP.NET Core architecture and dependency injection.
+3. EF Core and SQL performance tuning.
+4. SOLID, design patterns and clean architecture.
+5. Microservices system design.
+6. Azure architecture and production troubleshooting.

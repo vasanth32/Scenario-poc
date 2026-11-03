@@ -50,6 +50,7 @@ public sealed class AuthController(IOptions<JwtOptions> options, IWebHostEnviron
         return Ok(new TokenResponse(new JwtSecurityTokenHandler().WriteToken(token), expiresAt, request.Role));
     }
 
+    [Authorize]
     [HttpGet("me")]
     [ProducesResponseType<CurrentUserResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
