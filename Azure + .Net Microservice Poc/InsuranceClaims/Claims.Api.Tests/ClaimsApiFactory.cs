@@ -43,12 +43,36 @@ public sealed class ClaimsApiFactory : WebApplicationFactory<Program>
 
     public StubPolicyClient Policies { get; } = new();
 
-    public ClaimsApiFactory()
+   public ClaimsApiFactory()
+{
+    var server = Environment.GetEnvironmentVariable("TEST_SQL_SERVER")
+                 ?? @".\SQLEXPRESS";
+
+    var database = $"ClaimsDb_Test_{Guid.NewGuid():N}";
+
+    var user = Environment.GetEnvironmentVariable("TEST_SQL_USER");
+    var password = Environment.GetEnvironmentVariable("TEST_SQL_PASSWORD");
+
+    var connectionBuilder = new SqlConnectionStringBuilder
     {
-        var server = Environment.GetEnvironmentVariable("TEST_SQL_SERVER") ?? @".\SQLEXPRESS";
-        var database = $"ClaimsDb_Test_{Guid.NewGuid():N}";
-        _connectionString = $"Server={server};Database={database};Trusted_Connection=True;TrustServerCertificate=True";
+        DataSource = server,
+        InitialCatalog = database,
+        TrustServerCertificate = true
+    };
+
+    if (!string.IsNullOrWhiteSpace(user))
+    {
+        connectionBuilder.UserID = user;
+        connectionBuilder.Password = password;
+        connectionBuilder.IntegratedSecurity = false;
     }
+    else
+    {
+        connectionBuilder.IntegratedSecurity = true;
+    }
+
+    _connectionString = connectionBuilder.ConnectionString;
+}
 
     public HttpClient CreateAuthenticatedClient(string role = "Adjuster")
     {
