@@ -43,36 +43,40 @@ public sealed class ClaimsApiFactory : WebApplicationFactory<Program>
 
     public StubPolicyClient Policies { get; } = new();
 
-   public ClaimsApiFactory()
-{
-    var server = Environment.GetEnvironmentVariable("TEST_SQL_SERVER")
-                 ?? @".\SQLEXPRESS";
-
-    var database = $"ClaimsDb_Test_{Guid.NewGuid():N}";
-
-    var user = Environment.GetEnvironmentVariable("TEST_SQL_USER");
-    var password = Environment.GetEnvironmentVariable("TEST_SQL_PASSWORD");
-
-    var connectionBuilder = new SqlConnectionStringBuilder
+    public ClaimsApiFactory()
     {
-        DataSource = server,
-        InitialCatalog = database,
-        TrustServerCertificate = true
-    };
+        var server = Environment.GetEnvironmentVariable("TEST_SQL_SERVER")
+                     ?? @".\SQLEXPRESS";
 
-    if (!string.IsNullOrWhiteSpace(user))
-    {
-        connectionBuilder.UserID = user;
-        connectionBuilder.Password = password;
-        connectionBuilder.IntegratedSecurity = false;
+        var database = $"ClaimsDb_Test_{Guid.NewGuid():N}";
+
+        var user = Environment.GetEnvironmentVariable("TEST_SQL_USER");
+        var password = Environment.GetEnvironmentVariable("TEST_SQL_PASSWORD");
+
+        var connectionBuilder = new SqlConnectionStringBuilder
+        {
+            DataSource = server,
+            InitialCatalog = database,
+            TrustServerCertificate = true
+        };
+
+        if (!string.IsNullOrWhiteSpace(user))
+        {
+            if (string.IsNullOrWhiteSpace(password))
+                throw new InvalidOperationException(
+                    "TEST_SQL_PASSWORD must be configured when TEST_SQL_USER is set.");
+
+            connectionBuilder.UserID = user;
+            connectionBuilder.Password = password;
+            connectionBuilder.IntegratedSecurity = false;
+        }
+        else
+        {
+            connectionBuilder.IntegratedSecurity = true;
+        }
+
+        _connectionString = connectionBuilder.ConnectionString;
     }
-    else
-    {
-        connectionBuilder.IntegratedSecurity = true;
-    }
-
-    _connectionString = connectionBuilder.ConnectionString;
-}
 
     public HttpClient CreateAuthenticatedClient(string role = "Adjuster")
     {
