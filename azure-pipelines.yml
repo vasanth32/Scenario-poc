@@ -111,6 +111,10 @@ steps:
     displayName: 'Generate Claims migration bundle'
     env:
       ConnectionStrings__ClaimsDb: 'Server=localhost,1433;Database=ClaimsDb;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True;Encrypt=True'
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      Jwt__Issuer: 'https://ci.example.invalid'
+      Jwt__Audience: 'insuranceclaims-ci'
+      Jwt__SigningKey: 'temporary-ci-only-not-for-real-token-use-123456'
 
   # Generate Policy database migration bundle
   - script: |
@@ -130,6 +134,10 @@ steps:
     displayName: 'Generate Policy migration bundle'
     env:
       ConnectionStrings__PolicyDb: 'Server=localhost,1433;Database=PolicyDb;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True;Encrypt=True'
+      ASPNETCORE_ENVIRONMENT: 'Production'
+      Jwt__Issuer: 'https://ci.example.invalid'
+      Jwt__Audience: 'insuranceclaims-ci'
+      Jwt__SigningKey: 'temporary-ci-only-not-for-real-token-use-123456'
 
   # Publish migration bundles
   - task: PublishBuildArtifacts@1
