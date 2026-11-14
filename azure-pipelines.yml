@@ -1,0 +1,38 @@
+
+# InsuranceClaims - CI Pipeline
+# .NET 10 | Azure DevOps | GitHub
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - '/Azure/Azure + .Net Microservice Poc/InsuranceClaims/**'
+      - '/azure-pipelines.yml'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  solution: 'Azure/Azure + .Net Microservice Poc/InsuranceClaims/InsuranceClaims.slnx'
+
+steps:
+  - task: UseDotNet@2
+    displayName: 'Install .NET 10 SDK'
+    inputs:
+      packageType: 'sdk'
+      version: '10.x'
+
+  - script: dotnet --info
+    displayName: 'Verify .NET SDK'
+
+  - script: dotnet restore "$(solution)"
+    displayName: 'Restore NuGet packages'
+
+  - script: dotnet build "$(solution)" --configuration $(buildConfiguration) --no-restore
+    displayName: 'Build InsuranceClaims solution'
+
+  - script: dotnet test "$(solution)" --configuration $(buildConfiguration) --no-build
+    displayName: 'Run automated tests'
