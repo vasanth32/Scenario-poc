@@ -1,11 +1,35 @@
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - 'Azure + .Net Microservice Poc/InsuranceClaims/**'
+      - 'azure-pipelines.yml'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  solution: 'Azure + .Net Microservice Poc/InsuranceClaims/InsuranceClaims.slnx'
+
 steps:
-  - script: |
-      echo "Current directory:"
-      pwd
+  - task: UseDotNet@2
+    displayName: 'Install .NET 10 SDK'
+    inputs:
+      packageType: 'sdk'
+      version: '10.x'
 
-      echo "Repository folders:"
-      ls -la
+  - script: dotnet --info
+    displayName: 'Verify .NET SDK'
 
-      echo "Searching for solution files:"
-      find . -type f \( -name "*.sln" -o -name "*.slnx" \)
-    displayName: 'Locate solution file'
+  - script: dotnet restore "$(solution)"
+    displayName: 'Restore NuGet packages'
+
+  - script: dotnet build "$(solution)" --configuration $(buildConfiguration) --no-restore
+    displayName: 'Build InsuranceClaims solution'
+
+  - script: dotnet test "$(solution)" --configuration $(buildConfiguration) --no-build
+    displayName: 'Run automated tests'
