@@ -16,6 +16,9 @@ public class Claim
     public ClaimStatus Status { get; set; }
     public DateTime CreatedAtUtc { get; set; }
     public string? Notes { get; set; }
+
+    // Temporary property for database deployment POC
+    public string? DeploymentNotes { get; set; }
 }
 
 // Response DTO
