@@ -22,14 +22,63 @@ steps:
       packageType: 'sdk'
       version: '10.x'
 
-  - script: dotnet --info
-    displayName: 'Verify .NET SDK'
-
   - script: dotnet restore "$(solution)"
     displayName: 'Restore NuGet packages'
 
   - script: dotnet build "$(solution)" --configuration $(buildConfiguration) --no-restore
     displayName: 'Build InsuranceClaims solution'
 
-  - script: dotnet test "$(solution)" --configuration $(buildConfiguration) --no-build
+  # Start temporary SQL Server
+  - script: |
+      set -e
+
+      docker run \
+        --name claims-test-sql \
+        -e ACCEPT_EULA=Y \
+        -e MSSQL_PID=Developer \
+        -e MSSQL_SA_PASSWORD="$SQL_SA_PASSWORD" \
+        -p 1433:1433 \
+        -d mcr.microsoft.com/mssql/server:2022-latest
+
+      echo "Waiting for SQL Server to become ready..."
+
+      for i in {1..60}; do
+        if docker logs claims-test-sql 2>&1 | grep -q "SQL Server is now ready for client connections"; then
+          echo "SQL Server is ready."
+          exit 0
+        fi
+
+        if [ "$(docker inspect -f '{{.State.Running}}' claims-test-sql 2>/dev/null)" != "true" ]; then
+          echo "SQL Server container stopped unexpectedly."
+          docker logs claims-test-sql
+          exit 1
+        fi
+
+        sleep 5
+      done
+
+      echo "SQL Server readiness timeout."
+      docker logs claims-test-sql
+      exit 1
+    displayName: 'Start temporary SQL Server'
+    env:
+      SQL_SA_PASSWORD: $(SQL_SA_PASSWORD)
+
+  # Execute integration tests
+  - script: |
+      dotnet test "$(solution)" \
+        --configuration $(buildConfiguration) \
+        --no-build \
+        --logger "console;verbosity=normal"
     displayName: 'Run automated tests'
+    env:
+      TEST_SQL_SERVER: 'localhost,1433'
+      TEST_SQL_USER: 'sa'
+      TEST_SQL_PASSWORD: $(SQL_SA_PASSWORD)
+
+  # Always clean up, even when tests fail
+  - script: |
+      echo "Removing temporary SQL Server container..."
+      docker rm -f claims-test-sql || true
+    displayName: 'Cleanup temporary SQL Server'
+    condition: always()
