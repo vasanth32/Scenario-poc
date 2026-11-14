@@ -16,15 +16,18 @@ variables:
   solution: 'Azure + .Net Microservice Poc/InsuranceClaims/InsuranceClaims.slnx'
 
 steps:
+  # Install .NET 10 SDK
   - task: UseDotNet@2
     displayName: 'Install .NET 10 SDK'
     inputs:
       packageType: 'sdk'
       version: '10.x'
 
+  # Restore NuGet packages
   - script: dotnet restore "$(solution)"
     displayName: 'Restore NuGet packages'
 
+  # Build solution
   - script: dotnet build "$(solution)" --configuration $(buildConfiguration) --no-restore
     displayName: 'Build InsuranceClaims solution'
 
@@ -76,13 +79,12 @@ steps:
       TEST_SQL_USER: 'sa'
       TEST_SQL_PASSWORD: $(SQL_SA_PASSWORD)
 
-  # Always clean up, even when tests fail
+  # Always clean up temporary SQL Server
   - script: |
       echo "Removing temporary SQL Server container..."
       docker rm -f claims-test-sql || true
     displayName: 'Cleanup temporary SQL Server'
     condition: always()
-
 
   # Install EF Core CLI
   - script: |
@@ -94,6 +96,8 @@ steps:
   # Generate Claims database migration bundle
   - script: |
       mkdir -p "$(Build.ArtifactStagingDirectory)/migrations"
+
+      dotnet restore "Claims.Api/Claims.Api.csproj" --runtime linux-x64
 
       dotnet ef migrations bundle \
         --project "Claims.Api/Claims.Api.csproj" \
@@ -110,6 +114,10 @@ steps:
 
   # Generate Policy database migration bundle
   - script: |
+      mkdir -p "$(Build.ArtifactStagingDirectory)/migrations"
+
+      dotnet restore "Policy.Api/Policy.Api.csproj" --runtime linux-x64
+
       dotnet ef migrations bundle \
         --project "Policy.Api/Policy.Api.csproj" \
         --startup-project "Policy.Api/Policy.Api.csproj" \
