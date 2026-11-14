@@ -82,3 +82,51 @@ steps:
       docker rm -f claims-test-sql || true
     displayName: 'Cleanup temporary SQL Server'
     condition: always()
+
+
+  # Install EF Core CLI
+  - script: |
+      dotnet tool install --global dotnet-ef --version 10.0.13
+      echo "##vso[task.prependpath]$HOME/.dotnet/tools"
+      dotnet ef --version
+    displayName: 'Install EF Core tools'
+
+  # Generate Claims database migration bundle
+  - script: |
+      mkdir -p "$(Build.ArtifactStagingDirectory)/migrations"
+
+      dotnet ef migrations bundle \
+        --project "Claims.Api/Claims.Api.csproj" \
+        --startup-project "Claims.Api/Claims.Api.csproj" \
+        --context ClaimsDbContext \
+        --configuration Release \
+        --self-contained \
+        --runtime linux-x64 \
+        --output "$(Build.ArtifactStagingDirectory)/migrations/claims-migrations"
+    workingDirectory: '$(Build.SourcesDirectory)/Azure + .Net Microservice Poc/InsuranceClaims'
+    displayName: 'Generate Claims migration bundle'
+    env:
+      ConnectionStrings__ClaimsDb: 'Server=localhost,1433;Database=ClaimsDb;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True;Encrypt=True'
+
+  # Generate Policy database migration bundle
+  - script: |
+      dotnet ef migrations bundle \
+        --project "Policy.Api/Policy.Api.csproj" \
+        --startup-project "Policy.Api/Policy.Api.csproj" \
+        --context PolicyDbContext \
+        --configuration Release \
+        --self-contained \
+        --runtime linux-x64 \
+        --output "$(Build.ArtifactStagingDirectory)/migrations/policy-migrations"
+    workingDirectory: '$(Build.SourcesDirectory)/Azure + .Net Microservice Poc/InsuranceClaims'
+    displayName: 'Generate Policy migration bundle'
+    env:
+      ConnectionStrings__PolicyDb: 'Server=localhost,1433;Database=PolicyDb;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True;Encrypt=True'
+
+  # Publish migration bundles
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish EF migration bundles'
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)/migrations'
+      ArtifactName: 'ef-migration-bundles'
+      publishLocation: 'Container'
