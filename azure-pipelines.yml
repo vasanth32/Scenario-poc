@@ -32,15 +32,18 @@ stages:
           vmImage: "ubuntu-latest"
 
         steps:
+          # Install .NET 10 SDK
           - task: UseDotNet@2
             displayName: "Install .NET 10 SDK"
             inputs:
               packageType: "sdk"
               version: "10.x"
 
+          # Restore NuGet packages
           - script: dotnet restore "$(solution)"
             displayName: "Restore NuGet packages"
 
+          # Build solution
           - script: dotnet build "$(solution)" --configuration $(buildConfiguration) --no-restore
             displayName: "Build InsuranceClaims solution"
 
@@ -78,6 +81,7 @@ stages:
             env:
               SQL_SA_PASSWORD: $(SQL_SA_PASSWORD)
 
+          # Execute integration tests
           - script: |
               dotnet test "$(solution)" \
                 --configuration $(buildConfiguration) \
@@ -89,6 +93,7 @@ stages:
               TEST_SQL_USER: "sa"
               TEST_SQL_PASSWORD: $(SQL_SA_PASSWORD)
 
+          # Always clean up temporary SQL Server
           - script: |
               docker rm -f claims-test-sql || true
             displayName: "Cleanup temporary SQL Server"
@@ -101,7 +106,7 @@ stages:
               dotnet ef --version
             displayName: "Install EF Core tools"
 
-          # Generate Claims bundle
+          # Generate Claims database migration bundle
           - script: |
               mkdir -p "$(Build.ArtifactStagingDirectory)/migrations"
 
@@ -124,7 +129,7 @@ stages:
               Jwt__Audience: "insuranceclaims-ci"
               Jwt__SigningKey: "temporary-ci-only-not-for-real-token-use-123456"
 
-          # Generate Policy bundle
+          # Generate Policy database migration bundle
           - script: |
               mkdir -p "$(Build.ArtifactStagingDirectory)/migrations"
 
@@ -147,7 +152,7 @@ stages:
               Jwt__Audience: "insuranceclaims-ci"
               Jwt__SigningKey: "temporary-ci-only-not-for-real-token-use-123456"
 
-          # Publish bundles
+          # Publish migration bundles
           - task: PublishBuildArtifacts@1
             displayName: "Publish EF migration bundles"
             inputs:
@@ -181,7 +186,7 @@ stages:
               artifactName: "ef-migration-bundles"
               downloadPath: "$(Pipeline.Workspace)"
 
-          # Verify downloaded bundles and SQL network connectivity
+          # Verify artifacts and SQL network connectivity
           - script: |
               set -e
 
@@ -217,6 +222,10 @@ stages:
             displayName: "Deploy ClaimsDb migrations"
             env:
               CLAIMS_CONNECTION: "Server=tcp:$(SQL_SERVER),1433;Initial Catalog=$(CLAIMS_DB);User ID=$(SQL_USERNAME);Password=$(SQL_PASSWORD);Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;"
+              ASPNETCORE_ENVIRONMENT: "Production"
+              Jwt__Issuer: "https://ci.example.invalid"
+              Jwt__Audience: "insuranceclaims-ci"
+              Jwt__SigningKey: "temporary-ci-only-not-for-real-token-use-123456"
 
           # Deploy Policy database
           - script: |
@@ -231,7 +240,12 @@ stages:
             displayName: "Deploy PolicyDb migrations"
             env:
               POLICY_CONNECTION: "Server=tcp:$(SQL_SERVER),1433;Initial Catalog=$(POLICY_DB);User ID=$(SQL_USERNAME);Password=$(SQL_PASSWORD);Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;"
+              ASPNETCORE_ENVIRONMENT: "Production"
+              Jwt__Issuer: "https://ci.example.invalid"
+              Jwt__Audience: "insuranceclaims-ci"
+              Jwt__SigningKey: "temporary-ci-only-not-for-real-token-use-123456"
 
+          # Deployment summary
           - script: |
               echo "Both database migration commands completed successfully."
             displayName: "Database deployment summary"
