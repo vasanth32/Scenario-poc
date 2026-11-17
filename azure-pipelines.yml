@@ -1,35 +1,38 @@
-
 trigger:
   branches:
     include:
       - main
   paths:
     include:
-      - 'Azure + .Net Microservice Poc/InsuranceClaims/**'
-      - 'azure-pipelines.yml'
+      - "Azure + .Net Microservice Poc/InsuranceClaims/**"
+      - "azure-pipelines.yml"
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: "ubuntu-latest"
 
 variables:
-  buildConfiguration: 'Release'
-  solution: 'Azure + .Net Microservice Poc/InsuranceClaims/InsuranceClaims.slnx'
+  - group: vg-insuranceclaims-db
 
+  - name: buildConfiguration
+    value: "Release"
+
+  - name: solution
+    value: "Azure + .Net Microservice Poc/InsuranceClaims/InsuranceClaims.slnx"
 steps:
   # Install .NET 10 SDK
   - task: UseDotNet@2
-    displayName: 'Install .NET 10 SDK'
+    displayName: "Install .NET 10 SDK"
     inputs:
-      packageType: 'sdk'
-      version: '10.x'
+      packageType: "sdk"
+      version: "10.x"
 
   # Restore NuGet packages
   - script: dotnet restore "$(solution)"
-    displayName: 'Restore NuGet packages'
+    displayName: "Restore NuGet packages"
 
   # Build solution
   - script: dotnet build "$(solution)" --configuration $(buildConfiguration) --no-restore
-    displayName: 'Build InsuranceClaims solution'
+    displayName: "Build InsuranceClaims solution"
 
   # Start temporary SQL Server
   - script: |
@@ -63,7 +66,7 @@ steps:
       echo "SQL Server readiness timeout."
       docker logs claims-test-sql
       exit 1
-    displayName: 'Start temporary SQL Server'
+    displayName: "Start temporary SQL Server"
     env:
       SQL_SA_PASSWORD: $(SQL_SA_PASSWORD)
 
@@ -73,17 +76,17 @@ steps:
         --configuration $(buildConfiguration) \
         --no-build \
         --logger "console;verbosity=normal"
-    displayName: 'Run automated tests'
+    displayName: "Run automated tests"
     env:
-      TEST_SQL_SERVER: 'localhost,1433'
-      TEST_SQL_USER: 'sa'
+      TEST_SQL_SERVER: "localhost,1433"
+      TEST_SQL_USER: "sa"
       TEST_SQL_PASSWORD: $(SQL_SA_PASSWORD)
 
   # Always clean up temporary SQL Server
   - script: |
       echo "Removing temporary SQL Server container..."
       docker rm -f claims-test-sql || true
-    displayName: 'Cleanup temporary SQL Server'
+    displayName: "Cleanup temporary SQL Server"
     condition: always()
 
   # Install EF Core CLI
@@ -91,7 +94,7 @@ steps:
       dotnet tool install --global dotnet-ef --version 10.0.13
       echo "##vso[task.prependpath]$HOME/.dotnet/tools"
       dotnet ef --version
-    displayName: 'Install EF Core tools'
+    displayName: "Install EF Core tools"
 
   # Generate Claims database migration bundle
   - script: |
@@ -107,14 +110,14 @@ steps:
         --self-contained \
         --runtime linux-x64 \
         --output "$(Build.ArtifactStagingDirectory)/migrations/claims-migrations"
-    workingDirectory: '$(Build.SourcesDirectory)/Azure + .Net Microservice Poc/InsuranceClaims'
-    displayName: 'Generate Claims migration bundle'
+    workingDirectory: "$(Build.SourcesDirectory)/Azure + .Net Microservice Poc/InsuranceClaims"
+    displayName: "Generate Claims migration bundle"
     env:
-      ConnectionStrings__ClaimsDb: 'Server=localhost,1433;Database=ClaimsDb;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True;Encrypt=True'
-      ASPNETCORE_ENVIRONMENT: 'Production'
-      Jwt__Issuer: 'https://ci.example.invalid'
-      Jwt__Audience: 'insuranceclaims-ci'
-      Jwt__SigningKey: 'temporary-ci-only-not-for-real-token-use-123456'
+      ConnectionStrings__ClaimsDb: "Server=localhost,1433;Database=ClaimsDb;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True;Encrypt=True"
+      ASPNETCORE_ENVIRONMENT: "Production"
+      Jwt__Issuer: "https://ci.example.invalid"
+      Jwt__Audience: "insuranceclaims-ci"
+      Jwt__SigningKey: "temporary-ci-only-not-for-real-token-use-123456"
 
   # Generate Policy database migration bundle
   - script: |
@@ -130,19 +133,19 @@ steps:
         --self-contained \
         --runtime linux-x64 \
         --output "$(Build.ArtifactStagingDirectory)/migrations/policy-migrations"
-    workingDirectory: '$(Build.SourcesDirectory)/Azure + .Net Microservice Poc/InsuranceClaims'
-    displayName: 'Generate Policy migration bundle'
+    workingDirectory: "$(Build.SourcesDirectory)/Azure + .Net Microservice Poc/InsuranceClaims"
+    displayName: "Generate Policy migration bundle"
     env:
-      ConnectionStrings__PolicyDb: 'Server=localhost,1433;Database=PolicyDb;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True;Encrypt=True'
-      ASPNETCORE_ENVIRONMENT: 'Production'
-      Jwt__Issuer: 'https://ci.example.invalid'
-      Jwt__Audience: 'insuranceclaims-ci'
-      Jwt__SigningKey: 'temporary-ci-only-not-for-real-token-use-123456'
+      ConnectionStrings__PolicyDb: "Server=localhost,1433;Database=PolicyDb;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True;Encrypt=True"
+      ASPNETCORE_ENVIRONMENT: "Production"
+      Jwt__Issuer: "https://ci.example.invalid"
+      Jwt__Audience: "insuranceclaims-ci"
+      Jwt__SigningKey: "temporary-ci-only-not-for-real-token-use-123456"
 
   # Publish migration bundles
   - task: PublishBuildArtifacts@1
-    displayName: 'Publish EF migration bundles'
+    displayName: "Publish EF migration bundles"
     inputs:
-      PathtoPublish: '$(Build.ArtifactStagingDirectory)/migrations'
-      ArtifactName: 'ef-migration-bundles'
-      publishLocation: 'Container'
+      PathtoPublish: "$(Build.ArtifactStagingDirectory)/migrations"
+      ArtifactName: "ef-migration-bundles"
+      publishLocation: "Container"
