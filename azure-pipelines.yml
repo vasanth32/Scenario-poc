@@ -222,6 +222,7 @@ stages:
             displayName: "Deploy ClaimsDb migrations"
             env:
               CLAIMS_CONNECTION: "Server=tcp:$(SQL_SERVER),1433;Initial Catalog=$(CLAIMS_DB);User ID=$(SQL_USERNAME);Password=$(SQL_PASSWORD);Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;"
+              ConnectionStrings__ClaimsDb: "Server=tcp:$(SQL_SERVER),1433;Initial Catalog=$(CLAIMS_DB);User ID=$(SQL_USERNAME);Password=$(SQL_PASSWORD);Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;"
               ASPNETCORE_ENVIRONMENT: "Production"
               Jwt__Issuer: "https://ci.example.invalid"
               Jwt__Audience: "insuranceclaims-ci"
@@ -240,6 +241,7 @@ stages:
             displayName: "Deploy PolicyDb migrations"
             env:
               POLICY_CONNECTION: "Server=tcp:$(SQL_SERVER),1433;Initial Catalog=$(POLICY_DB);User ID=$(SQL_USERNAME);Password=$(SQL_PASSWORD);Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;"
+              ConnectionStrings__PolicyDb: "Server=tcp:$(SQL_SERVER),1433;Initial Catalog=$(POLICY_DB);User ID=$(SQL_USERNAME);Password=$(SQL_PASSWORD);Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;"
               ASPNETCORE_ENVIRONMENT: "Production"
               Jwt__Issuer: "https://ci.example.invalid"
               Jwt__Audience: "insuranceclaims-ci"
