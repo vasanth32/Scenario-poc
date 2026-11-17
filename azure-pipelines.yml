@@ -7,9 +7,6 @@ trigger:
       - "Azure + .Net Microservice Poc/InsuranceClaims/**"
       - "azure-pipelines.yml"
 
-pool:
-  vmImage: "ubuntu-latest"
-
 variables:
   - group: vg-insuranceclaims-db
 
@@ -18,134 +15,223 @@ variables:
 
   - name: solution
     value: "Azure + .Net Microservice Poc/InsuranceClaims/InsuranceClaims.slnx"
-steps:
-  # Install .NET 10 SDK
-  - task: UseDotNet@2
-    displayName: "Install .NET 10 SDK"
-    inputs:
-      packageType: "sdk"
-      version: "10.x"
 
-  # Restore NuGet packages
-  - script: dotnet restore "$(solution)"
-    displayName: "Restore NuGet packages"
+stages:
+  # =====================================================
+  # STAGE 1: CONTINUOUS INTEGRATION
+  # =====================================================
 
-  # Build solution
-  - script: dotnet build "$(solution)" --configuration $(buildConfiguration) --no-restore
-    displayName: "Build InsuranceClaims solution"
+  - stage: CI
+    displayName: "Build, Test and Generate Migration Bundles"
 
-  # Start temporary SQL Server
-  - script: |
-      set -e
+    jobs:
+      - job: BuildAndTest
+        displayName: "Build and Test InsuranceClaims"
 
-      docker run \
-        --name claims-test-sql \
-        -e ACCEPT_EULA=Y \
-        -e MSSQL_PID=Developer \
-        -e MSSQL_SA_PASSWORD="$SQL_SA_PASSWORD" \
-        -p 1433:1433 \
-        -d mcr.microsoft.com/mssql/server:2022-latest
+        pool:
+          vmImage: "ubuntu-latest"
 
-      echo "Waiting for SQL Server to become ready..."
+        steps:
+          - task: UseDotNet@2
+            displayName: "Install .NET 10 SDK"
+            inputs:
+              packageType: "sdk"
+              version: "10.x"
 
-      for i in {1..60}; do
-        if docker logs claims-test-sql 2>&1 | grep -q "SQL Server is now ready for client connections"; then
-          echo "SQL Server is ready."
-          exit 0
-        fi
+          - script: dotnet restore "$(solution)"
+            displayName: "Restore NuGet packages"
 
-        if [ "$(docker inspect -f '{{.State.Running}}' claims-test-sql 2>/dev/null)" != "true" ]; then
-          echo "SQL Server container stopped unexpectedly."
-          docker logs claims-test-sql
-          exit 1
-        fi
+          - script: dotnet build "$(solution)" --configuration $(buildConfiguration) --no-restore
+            displayName: "Build InsuranceClaims solution"
 
-        sleep 5
-      done
+          # Start temporary SQL Server
+          - script: |
+              set -e
 
-      echo "SQL Server readiness timeout."
-      docker logs claims-test-sql
-      exit 1
-    displayName: "Start temporary SQL Server"
-    env:
-      SQL_SA_PASSWORD: $(SQL_SA_PASSWORD)
+              docker run \
+                --name claims-test-sql \
+                -e ACCEPT_EULA=Y \
+                -e MSSQL_PID=Developer \
+                -e MSSQL_SA_PASSWORD="$SQL_SA_PASSWORD" \
+                -p 1433:1433 \
+                -d mcr.microsoft.com/mssql/server:2022-latest
 
-  # Execute integration tests
-  - script: |
-      dotnet test "$(solution)" \
-        --configuration $(buildConfiguration) \
-        --no-build \
-        --logger "console;verbosity=normal"
-    displayName: "Run automated tests"
-    env:
-      TEST_SQL_SERVER: "localhost,1433"
-      TEST_SQL_USER: "sa"
-      TEST_SQL_PASSWORD: $(SQL_SA_PASSWORD)
+              echo "Waiting for SQL Server..."
 
-  # Always clean up temporary SQL Server
-  - script: |
-      echo "Removing temporary SQL Server container..."
-      docker rm -f claims-test-sql || true
-    displayName: "Cleanup temporary SQL Server"
-    condition: always()
+              for i in {1..60}; do
+                if docker logs claims-test-sql 2>&1 | grep -q "SQL Server is now ready for client connections"; then
+                  echo "SQL Server is ready."
+                  exit 0
+                fi
 
-  # Install EF Core CLI
-  - script: |
-      dotnet tool install --global dotnet-ef --version 10.0.13
-      echo "##vso[task.prependpath]$HOME/.dotnet/tools"
-      dotnet ef --version
-    displayName: "Install EF Core tools"
+                if [ "$(docker inspect -f '{{.State.Running}}' claims-test-sql 2>/dev/null)" != "true" ]; then
+                  docker logs claims-test-sql
+                  exit 1
+                fi
 
-  # Generate Claims database migration bundle
-  - script: |
-      mkdir -p "$(Build.ArtifactStagingDirectory)/migrations"
+                sleep 5
+              done
 
-      dotnet restore "Claims.Api/Claims.Api.csproj" --runtime linux-x64
+              docker logs claims-test-sql
+              exit 1
+            displayName: "Start temporary SQL Server"
+            env:
+              SQL_SA_PASSWORD: $(SQL_SA_PASSWORD)
 
-      dotnet ef migrations bundle \
-        --project "Claims.Api/Claims.Api.csproj" \
-        --startup-project "Claims.Api/Claims.Api.csproj" \
-        --context ClaimsDbContext \
-        --configuration Release \
-        --self-contained \
-        --runtime linux-x64 \
-        --output "$(Build.ArtifactStagingDirectory)/migrations/claims-migrations"
-    workingDirectory: "$(Build.SourcesDirectory)/Azure + .Net Microservice Poc/InsuranceClaims"
-    displayName: "Generate Claims migration bundle"
-    env:
-      ConnectionStrings__ClaimsDb: "Server=localhost,1433;Database=ClaimsDb;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True;Encrypt=True"
-      ASPNETCORE_ENVIRONMENT: "Production"
-      Jwt__Issuer: "https://ci.example.invalid"
-      Jwt__Audience: "insuranceclaims-ci"
-      Jwt__SigningKey: "temporary-ci-only-not-for-real-token-use-123456"
+          - script: |
+              dotnet test "$(solution)" \
+                --configuration $(buildConfiguration) \
+                --no-build \
+                --logger "console;verbosity=normal"
+            displayName: "Run automated tests"
+            env:
+              TEST_SQL_SERVER: "localhost,1433"
+              TEST_SQL_USER: "sa"
+              TEST_SQL_PASSWORD: $(SQL_SA_PASSWORD)
 
-  # Generate Policy database migration bundle
-  - script: |
-      mkdir -p "$(Build.ArtifactStagingDirectory)/migrations"
+          - script: |
+              docker rm -f claims-test-sql || true
+            displayName: "Cleanup temporary SQL Server"
+            condition: always()
 
-      dotnet restore "Policy.Api/Policy.Api.csproj" --runtime linux-x64
+          # Install EF Core CLI
+          - script: |
+              dotnet tool install --global dotnet-ef --version 10.0.13
+              echo "##vso[task.prependpath]$HOME/.dotnet/tools"
+              dotnet ef --version
+            displayName: "Install EF Core tools"
 
-      dotnet ef migrations bundle \
-        --project "Policy.Api/Policy.Api.csproj" \
-        --startup-project "Policy.Api/Policy.Api.csproj" \
-        --context PolicyDbContext \
-        --configuration Release \
-        --self-contained \
-        --runtime linux-x64 \
-        --output "$(Build.ArtifactStagingDirectory)/migrations/policy-migrations"
-    workingDirectory: "$(Build.SourcesDirectory)/Azure + .Net Microservice Poc/InsuranceClaims"
-    displayName: "Generate Policy migration bundle"
-    env:
-      ConnectionStrings__PolicyDb: "Server=localhost,1433;Database=PolicyDb;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True;Encrypt=True"
-      ASPNETCORE_ENVIRONMENT: "Production"
-      Jwt__Issuer: "https://ci.example.invalid"
-      Jwt__Audience: "insuranceclaims-ci"
-      Jwt__SigningKey: "temporary-ci-only-not-for-real-token-use-123456"
+          # Generate Claims bundle
+          - script: |
+              mkdir -p "$(Build.ArtifactStagingDirectory)/migrations"
 
-  # Publish migration bundles
-  - task: PublishBuildArtifacts@1
-    displayName: "Publish EF migration bundles"
-    inputs:
-      PathtoPublish: "$(Build.ArtifactStagingDirectory)/migrations"
-      ArtifactName: "ef-migration-bundles"
-      publishLocation: "Container"
+              dotnet restore "Claims.Api/Claims.Api.csproj" --runtime linux-x64
+
+              dotnet ef migrations bundle \
+                --project "Claims.Api/Claims.Api.csproj" \
+                --startup-project "Claims.Api/Claims.Api.csproj" \
+                --context ClaimsDbContext \
+                --configuration Release \
+                --self-contained \
+                --runtime linux-x64 \
+                --output "$(Build.ArtifactStagingDirectory)/migrations/claims-migrations"
+            workingDirectory: "$(Build.SourcesDirectory)/Azure + .Net Microservice Poc/InsuranceClaims"
+            displayName: "Generate Claims migration bundle"
+            env:
+              ConnectionStrings__ClaimsDb: "Server=localhost,1433;Database=ClaimsDb;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True;Encrypt=True"
+              ASPNETCORE_ENVIRONMENT: "Production"
+              Jwt__Issuer: "https://ci.example.invalid"
+              Jwt__Audience: "insuranceclaims-ci"
+              Jwt__SigningKey: "temporary-ci-only-not-for-real-token-use-123456"
+
+          # Generate Policy bundle
+          - script: |
+              mkdir -p "$(Build.ArtifactStagingDirectory)/migrations"
+
+              dotnet restore "Policy.Api/Policy.Api.csproj" --runtime linux-x64
+
+              dotnet ef migrations bundle \
+                --project "Policy.Api/Policy.Api.csproj" \
+                --startup-project "Policy.Api/Policy.Api.csproj" \
+                --context PolicyDbContext \
+                --configuration Release \
+                --self-contained \
+                --runtime linux-x64 \
+                --output "$(Build.ArtifactStagingDirectory)/migrations/policy-migrations"
+            workingDirectory: "$(Build.SourcesDirectory)/Azure + .Net Microservice Poc/InsuranceClaims"
+            displayName: "Generate Policy migration bundle"
+            env:
+              ConnectionStrings__PolicyDb: "Server=localhost,1433;Database=PolicyDb;User Id=sa;Password=$(SQL_SA_PASSWORD);TrustServerCertificate=True;Encrypt=True"
+              ASPNETCORE_ENVIRONMENT: "Production"
+              Jwt__Issuer: "https://ci.example.invalid"
+              Jwt__Audience: "insuranceclaims-ci"
+              Jwt__SigningKey: "temporary-ci-only-not-for-real-token-use-123456"
+
+          # Publish bundles
+          - task: PublishBuildArtifacts@1
+            displayName: "Publish EF migration bundles"
+            inputs:
+              PathtoPublish: "$(Build.ArtifactStagingDirectory)/migrations"
+              ArtifactName: "ef-migration-bundles"
+              publishLocation: "Container"
+
+  # =====================================================
+  # STAGE 2: DATABASE CONTINUOUS DEPLOYMENT
+  # =====================================================
+
+  - stage: DatabaseDeployment
+    displayName: "Deploy Azure SQL Database Migrations"
+    dependsOn: CI
+    condition: succeeded()
+
+    jobs:
+      - job: DeployMigrations
+        displayName: "Deploy ClaimsDb and PolicyDb"
+
+        pool:
+          vmImage: "ubuntu-latest"
+
+        steps:
+          # Download CI artifacts
+          - task: DownloadBuildArtifacts@1
+            displayName: "Download migration bundles"
+            inputs:
+              buildType: "current"
+              downloadType: "single"
+              artifactName: "ef-migration-bundles"
+              downloadPath: "$(Pipeline.Workspace)"
+
+          # Verify downloaded bundles and SQL network connectivity
+          - script: |
+              set -e
+
+              echo "Checking migration artifacts..."
+
+              ls -lh "$(Pipeline.Workspace)/ef-migration-bundles"
+
+              test -f "$(Pipeline.Workspace)/ef-migration-bundles/claims-migrations"
+              test -f "$(Pipeline.Workspace)/ef-migration-bundles/policy-migrations"
+
+              chmod +x "$(Pipeline.Workspace)/ef-migration-bundles/claims-migrations"
+              chmod +x "$(Pipeline.Workspace)/ef-migration-bundles/policy-migrations"
+
+              echo "Checking Azure SQL network connectivity..."
+
+              timeout 10 bash -c "</dev/tcp/$SQL_SERVER/1433"
+
+              echo "Azure SQL TCP connectivity successful."
+            displayName: "Verify artifacts and SQL connectivity"
+            env:
+              SQL_SERVER: $(SQL_SERVER)
+
+          # Deploy Claims database
+          - script: |
+              set -e
+
+              echo "Deploying ClaimsDb migrations..."
+
+              "$(Pipeline.Workspace)/ef-migration-bundles/claims-migrations" \
+                --connection "$CLAIMS_CONNECTION"
+
+              echo "ClaimsDb migration completed."
+            displayName: "Deploy ClaimsDb migrations"
+            env:
+              CLAIMS_CONNECTION: "Server=tcp:$(SQL_SERVER),1433;Initial Catalog=$(CLAIMS_DB);User ID=$(SQL_USERNAME);Password=$(SQL_PASSWORD);Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;"
+
+          # Deploy Policy database
+          - script: |
+              set -e
+
+              echo "Deploying PolicyDb migrations..."
+
+              "$(Pipeline.Workspace)/ef-migration-bundles/policy-migrations" \
+                --connection "$POLICY_CONNECTION"
+
+              echo "PolicyDb migration completed."
+            displayName: "Deploy PolicyDb migrations"
+            env:
+              POLICY_CONNECTION: "Server=tcp:$(SQL_SERVER),1433;Initial Catalog=$(POLICY_DB);User ID=$(SQL_USERNAME);Password=$(SQL_PASSWORD);Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;"
+
+          - script: |
+              echo "Both database migration commands completed successfully."
+            displayName: "Database deployment summary"
